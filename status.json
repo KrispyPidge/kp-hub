@@ -1,6 +1,66 @@
 {
-  "updated_at": "2026-04-18T21:23:44Z",
-  "apps": {},
+  "updated_at": "2026-04-18T21:36:56Z",
+  "apps": {
+    "streamclipper": {
+      "state": "green",
+      "last_run_at": "2026-04-12T02:47:47Z",
+      "message": "Running · :8420 · last run 6d ago · 0 clips/7d",
+      "metric": {
+        "label": "clips last 7d",
+        "value": 0
+      }
+    },
+    "thumbnail_generator": {
+      "state": "amber",
+      "last_run_at": "2026-04-05T02:43:50Z",
+      "message": "Idle · :8420 taken · last: God Of War Ragnarok thumb 13d ago",
+      "metric": {
+        "label": "last thumbnail",
+        "value": "God Of War Ragnarok"
+      }
+    },
+    "hivemind": {
+      "state": "amber",
+      "last_run_at": "2026-04-07T17:36:03.353Z",
+      "message": "Stale · cache 11d old · 30 picks ≥30",
+      "metric": {
+        "label": "hot picks (≥30)",
+        "value": 30
+      },
+      "top_pick": {
+        "game": "Art",
+        "score": 95,
+        "reason": "Strong social buzz. Heavy news coverage. Recent patch/event signal. 6,535 live twitch viewers. Low streamer competition.",
+        "image": "https://static-cdn.jtvnw.net/ttv-boxart/509660-144x192.jpg",
+        "breakdown": {
+          "socialBuzz": 100,
+          "newsCoverage": 100,
+          "updateSignal": 100,
+          "steamPresence": 0,
+          "twitchOpportunity": 100,
+          "freshness": 100
+        },
+        "twitch": {
+          "viewers": 6535,
+          "streamers": "97+",
+          "streamerCount": 97,
+          "avgViewers": 67,
+          "ratio": 67,
+          "rank": 34
+        }
+      }
+    },
+    "content_pipeline": {
+      "state": "amber",
+      "message": "Paused · 1 ideas · 31 scheduled · 0 live",
+      "counts": {
+        "ideas": 1,
+        "scheduled": 31,
+        "live": 0
+      },
+      "last_run_at": "2026-04-07T18:46:34Z"
+    }
+  },
   "next_stream": {
     "starts_at": "2026-04-21T17:30:00Z",
     "summary": "🔴 KrispyPidgeon LIVE — Marathon"
