@@ -685,8 +685,8 @@ footer .heart { color: var(--gold); }
       <span class="mono" style="color:var(--ok)">●</span> <span>services 6/7 up</span>
       <span class="tb-dot"></span>
       <span id="supervisor-status" title="Local launcher (kp-supervisor :8090)"><span id="supervisor-dot" class="status-dot grey" style="display:inline-block;vertical-align:middle;margin-right:6px"></span><span class="mono" style="color:var(--text-3)">launcher</span></span>
-      <button class="tb-btn"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg> Refresh</button>
-      <button class="tb-btn primary">Go live checklist</button>
+      <button class="tb-btn" id="refresh-btn" onclick="refreshAll(event)" title="Re-fetch status, podcast feed and supervisor health"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a9 9 0 0 1-9 9 9 9 0 0 1-8.05-5M3 12a9 9 0 0 1 9-9 9 9 0 0 1 8.05 5"/><path d="M21 3v5h-5M3 21v-5h5"/></svg> Refresh</button>
+      <button class="tb-btn primary" onclick="openGoLiveChecklist(event)" title="Copies /stream-prep and scrolls to the Stream Prep tile">Go live checklist</button>
     </div>
   </header>
 
@@ -698,21 +698,21 @@ footer .heart { color: var(--gold); }
       <p class="hero-sub">Seven production tools. One pigeon. All tiles green except two — and both of those are known. Hivemind pulled a fresh pick at 18:02. Thumbnails pre-queued for Tuesday's Valorant session.</p>
 
       <div class="hero-readout">
-        <div class="readout-cell">
-          <div class="k">VOD queue</div>
-          <div class="v mono">3 waiting</div>
+        <div class="readout-cell" id="readout-next-stream">
+          <div class="k">Next stream</div>
+          <div class="v mono">—</div>
         </div>
-        <div class="readout-cell">
+        <div class="readout-cell" id="readout-clips">
           <div class="k">Clips last 7d</div>
-          <div class="v mono">42</div>
+          <div class="v mono">—</div>
         </div>
-        <div class="readout-cell warn">
-          <div class="k">Port conflict</div>
-          <div class="v mono">:8420 ×2</div>
+        <div class="readout-cell" id="readout-supervisor">
+          <div class="k">Launcher</div>
+          <div class="v mono">offline</div>
         </div>
-        <div class="readout-cell">
+        <div class="readout-cell" id="readout-hivemind">
           <div class="k">Hivemind cache</div>
-          <div class="v mono">2h 12m</div>
+          <div class="v mono">—</div>
         </div>
       </div>
     </div>
@@ -852,8 +852,9 @@ footer .heart { color: var(--gold); }
         <span class="tile-status-text"><span style="color:var(--ok)">Published</span> · ep 87 · today 06:03</span>
       </div>
       <div class="tile-cta-row">
-        <button class="tile-cta">Listen to latest <span class="arr">→</span></button>
-        <button class="tile-cta-secondary" title="Copy RSS URL" onclick="navigator.clipboard.writeText('https://krispypidge.github.io/ai-podcast-feed/feed.xml')">RSS</button>
+        <button class="tile-cta" onclick="playLatestEpisode(event)">Listen to latest <span class="arr">→</span></button>
+        <button class="tile-cta-secondary" title="Copy a shareable link to this episode" onclick="copyLatestEpisodeLink(event)">Copy link</button>
+        <button class="tile-cta-secondary" title="Copy RSS URL" onclick="copyRssUrl(event)">RSS</button>
       </div>
     </div>
 
@@ -1188,6 +1189,100 @@ footer .heart { color: var(--gold); }
     }
   }
 
+  // --- AI Podcast Feed tile actions -----------------------------------
+  const PODCAST_PAGE_URL = 'https://krispypidge.github.io/ai-podcast-feed/';
+
+  function _flashBtn(btn, ok) {
+    const original = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = ok;
+    setTimeout(() => { btn.innerHTML = original; btn.disabled = false; }, 2000);
+  }
+
+  async function playLatestEpisode(ev) {
+    const btn = ev.currentTarget;
+    const audio = document.getElementById('pod-audio');
+    if (!audio || !audio.src) {
+      _flashBtn(btn, '⚠ not loaded yet');
+      return;
+    }
+    // Scroll the podcast card (first card in bottom grid) into view, then play.
+    const card = document.querySelector('.bottom-grid .card');
+    if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    try {
+      await audio.play();
+      _flashBtn(btn, '✓ Playing below');
+    } catch {
+      _flashBtn(btn, '⚠ playback blocked');
+    }
+  }
+  window.playLatestEpisode = playLatestEpisode;
+
+  async function copyLatestEpisodeLink(ev) {
+    const btn = ev.currentTarget;
+    const ep = window.__latestEpisode;
+    // Prefer the MP3 enclosure (directly playable in any browser);
+    // fall back to the feed page if the MP3 isn't known yet.
+    const url = ep?.audioUrl || PODCAST_PAGE_URL;
+    try {
+      await navigator.clipboard.writeText(url);
+      _flashBtn(btn, '✓ Link copied');
+    } catch {
+      _flashBtn(btn, '⚠ clipboard blocked');
+    }
+  }
+  window.copyLatestEpisodeLink = copyLatestEpisodeLink;
+
+  async function copyRssUrl(ev) {
+    const btn = ev.currentTarget;
+    try {
+      await navigator.clipboard.writeText('https://krispypidge.github.io/ai-podcast-feed/feed.xml');
+      _flashBtn(btn, '✓ RSS copied');
+    } catch {
+      _flashBtn(btn, '⚠ clipboard blocked');
+    }
+  }
+  window.copyRssUrl = copyRssUrl;
+
+  // --- Topbar actions -------------------------------------------------
+  async function refreshAll(ev) {
+    const btn = ev.currentTarget;
+    const icon = btn.querySelector('svg');
+    if (icon) {
+      icon.style.transition = 'transform .6s ease-out';
+      icon.style.transform = 'rotate(360deg)';
+      setTimeout(() => { icon.style.transition = ''; icon.style.transform = ''; }, 650);
+    }
+    btn.disabled = true;
+    try {
+      await Promise.allSettled([
+        loadStatus(),
+        loadPodcast(),
+        pingSupervisor(),
+      ]);
+    } finally {
+      setTimeout(() => { btn.disabled = false; }, 600);
+    }
+  }
+  window.refreshAll = refreshAll;
+
+  function openGoLiveChecklist(ev) {
+    const tile = document.querySelector('.tile[data-app="stream_prep_autopilot"]');
+    if (!tile) return;
+    // Flash the tile so the user knows where to go next.
+    tile.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    tile.style.transition = 'box-shadow .3s ease-out';
+    tile.style.boxShadow = '0 0 0 2px var(--purple), 0 0 30px rgba(167,139,250,0.35)';
+    setTimeout(() => { tile.style.boxShadow = ''; }, 1600);
+    // Also copy the command so the user can paste into Claude Code immediately.
+    const copyBtn = tile.querySelector('.tile-cta');
+    if (copyBtn) {
+      const synthetic = { currentTarget: copyBtn };
+      copyStreamPrep(synthetic);
+    }
+  }
+  window.openGoLiveChecklist = openGoLiveChecklist;
+
   // --- /stream-prep clipboard helper ----------------------------------
   // Static hub can't invoke Claude Code directly — copy the slash command
   // (plus any known next-stream context) so the user can paste into CC.
@@ -1261,6 +1356,14 @@ footer .heart { color: var(--gold); }
       const when = ago === 0 ? 'today' : ago === 1 ? 'yesterday' : `${ago}d ago`;
       tile.innerHTML = `<span style="color:var(--ok)">Published</span> · ep ${epNum || '?'} · ${when}`;
     }
+
+    // Stash state so tile buttons (Listen to latest / Copy link) can use it.
+    window.__latestEpisode = {
+      title,
+      audioUrl,
+      epNum,
+      pubDate: pubDate ? new Date(pubDate).toISOString() : null,
+    };
 
     // Wire the play button to a real <audio> element (created lazily)
     if (audioUrl) {
@@ -1345,6 +1448,56 @@ footer .heart { color: var(--gold); }
     renderNextStream(status.next_stream);
     if (status.apps?.hivemind?.top_pick) renderHivemindTopPick(status.apps.hivemind.top_pick);
     if (status.apps?.content_pipeline?.counts) renderContentPipelineCounts(status.apps.content_pipeline.counts);
+    renderHeroReadout(status);
+  }
+
+  // --- Hero readout cells -------------------------------------------
+  function fmtAgo(isoOrDate) {
+    if (!isoOrDate) return null;
+    const t = (isoOrDate instanceof Date) ? isoOrDate : new Date(isoOrDate);
+    if (isNaN(t)) return null;
+    const s = Math.max(0, Math.floor((Date.now() - t.getTime()) / 1000));
+    if (s < 60) return `${s}s`;
+    if (s < 3600) return `${Math.floor(s / 60)}m`;
+    if (s < 86400) { const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60); return `${h}h ${m}m`; }
+    return `${Math.floor(s / 86400)}d`;
+  }
+  function fmtUntil(isoOrDate) {
+    if (!isoOrDate) return null;
+    const t = (isoOrDate instanceof Date) ? isoOrDate : new Date(isoOrDate);
+    if (isNaN(t)) return null;
+    const s = Math.max(0, Math.floor((t.getTime() - Date.now()) / 1000));
+    if (s < 3600) return `${Math.floor(s / 60)}m`;
+    if (s < 86400) { const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60); return `${h}h ${m}m`; }
+    const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600);
+    return `${d}d ${h}h`;
+  }
+  function renderHeroReadout(status) {
+    // Next stream
+    const nsCell = document.querySelector('#readout-next-stream .v');
+    if (nsCell) {
+      const until = fmtUntil(status.next_stream?.starts_at);
+      nsCell.textContent = until || '—';
+    }
+    // Clips last 7d — from streamclipper metric
+    const clipsCell = document.querySelector('#readout-clips .v');
+    if (clipsCell) {
+      const v = status.apps?.streamclipper?.metric?.value;
+      clipsCell.textContent = (v == null) ? '—' : String(v);
+    }
+    // Supervisor (local launcher) reachable
+    const supCell = document.querySelector('#readout-supervisor');
+    if (supCell) {
+      const up = !!status.supervisor_reachable;
+      supCell.querySelector('.v').textContent = up ? 'up' : 'offline';
+      supCell.querySelector('.v').style.color = up ? 'var(--ok)' : 'var(--text-3)';
+    }
+    // Hivemind cache age
+    const hmCell = document.querySelector('#readout-hivemind .v');
+    if (hmCell) {
+      const ago = fmtAgo(status.apps?.hivemind?.last_run_at);
+      hmCell.textContent = ago ? `${ago} old` : '—';
+    }
   }
 
   // --- Hivemind top pick swap ----------------------------------------
@@ -1357,10 +1510,23 @@ footer .heart { color: var(--gold); }
     if (artTitle) artTitle.textContent = game;
 
     const artBox = document.querySelector('.hm-art');
+    const artLabel = document.querySelector('.hm-art-label');
     if (artBox && top.image) {
-      artBox.style.backgroundImage = `url("${top.image}")`;
-      artBox.style.backgroundSize = 'cover';
-      artBox.style.backgroundPosition = 'center';
+      // Preload so we can detect failure and fall back to the gradient.
+      const probe = new Image();
+      probe.onload = () => {
+        artBox.style.backgroundImage =
+          `linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0) 100%), url("${top.image}")`;
+        artBox.style.backgroundSize = 'cover, cover';
+        artBox.style.backgroundPosition = 'center, center';
+        if (artLabel) artLabel.textContent = 'Cover art';
+      };
+      probe.onerror = () => {
+        if (artLabel) artLabel.textContent = 'Art unavailable';
+      };
+      probe.src = top.image;
+    } else if (artLabel) {
+      artLabel.textContent = 'No cover yet';
     }
 
     const title = document.querySelector('.hm-title');
