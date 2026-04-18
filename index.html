@@ -1088,8 +1088,12 @@ footer .heart { color: var(--gold); }
       bigs[1].textContent = String(m).padStart(2, '0');
       bigs[2].textContent = String(s).padStart(2, '0');
     }
+    // Don't overwrite the eyebrow while live — Twitch detector owns it.
+    if (window.__isLive) return;
     const eyebrow = document.querySelector('.hero-eyebrow');
-    if (eyebrow) eyebrow.lastChild.textContent = ` Offline · next stream in ${h}h ${m}m`;
+    if (eyebrow) {
+      eyebrow.innerHTML = `<span class="live-dot"></span> Offline · next stream in ${h}h ${m}m`;
+    }
   }
   updateCountdown();
   setInterval(updateCountdown, 1000);
@@ -1254,15 +1258,68 @@ footer .heart { color: var(--gold); }
     });
     renderNextStream(status.next_stream);
 
-    // TODO v2: renderHero — Twitch live check via embed iframe events
-    //   (see krispypidgeon.tv/twitch + player.twitch.tv postMessage API).
-    //
     // TODO v2: renderHivemindTopPick(status.apps.hivemind.top_pick) — swap
     //   game name, score ring value, reason text in the .hivemind section.
   }
 
   loadStatus();
   setInterval(loadStatus, 120_000); // 2 min refresh per spec §4
+
+  // --- Twitch live detection (hidden embed, zero auth) ----------------
+  // Spec §4 Option 1: drop a hidden Twitch player on the page; it fires
+  // ONLINE/OFFLINE events when the channel state changes. No API keys.
+  const TWITCH_CHANNEL = 'krispypidgeon';
+  const TWITCH_PARENTS = ['krispypidge.github.io', 'localhost', '127.0.0.1'];
+
+  function setLive(isLive) {
+    if (window.__isLive === isLive) return;
+    window.__isLive = isLive;
+    const eyebrow = document.querySelector('.hero-eyebrow');
+    if (!eyebrow) return;
+    if (isLive) {
+      eyebrow.innerHTML =
+        '<span class="live-dot"></span> LIVE NOW · ' +
+        `<a href="https://twitch.tv/${TWITCH_CHANNEL}" target="_blank" rel="noopener" ` +
+        'style="color:inherit;text-decoration:underline;text-underline-offset:2px">watch \u2197</a>';
+    } else {
+      // hand the eyebrow back to updateCountdown
+      updateCountdown();
+    }
+  }
+
+  (function loadTwitchDetector() {
+    // Hidden host element — 1px, off-screen, no pointer events.
+    let host = document.getElementById('twitch-detector');
+    if (!host) {
+      host = document.createElement('div');
+      host.id = 'twitch-detector';
+      host.style.cssText =
+        'position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;' +
+        'opacity:0;pointer-events:none;overflow:hidden;';
+      document.body.appendChild(host);
+    }
+    const s = document.createElement('script');
+    s.src = 'https://embed.twitch.tv/embed/v1.js';
+    s.onload = () => {
+      try {
+        const player = new Twitch.Player('twitch-detector', {
+          channel: TWITCH_CHANNEL,
+          parent: TWITCH_PARENTS,
+          width: 100, height: 100,
+          muted: true, autoplay: false, controls: false,
+        });
+        player.addEventListener(Twitch.Player.ONLINE,  () => setLive(true));
+        player.addEventListener(Twitch.Player.OFFLINE, () => setLive(false));
+        // READY fires after embed loads — at that point, the player has
+        // already determined live state, so the appropriate ONLINE/OFFLINE
+        // event will follow.
+      } catch (e) {
+        console.warn('[hub] twitch detector init failed:', e);
+      }
+    };
+    s.onerror = () => console.warn('[hub] twitch embed script blocked');
+    document.head.appendChild(s);
+  })();
 </script>
 </body>
 </html>
