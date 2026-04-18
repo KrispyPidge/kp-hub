@@ -164,7 +164,9 @@ def read_hivemind() -> dict | None:
     if not opps:
         return None
     opps_sorted = sorted(opps, key=lambda o: -(o.get("score") or 0))
-    top = opps_sorted[0]
+    # Prefer Steam-backed picks (real games) over generic Twitch categories
+    steam_backed = [o for o in opps_sorted if o.get("appId")]
+    top = steam_backed[0] if steam_backed else opps_sorted[0]
     hot_count = sum(1 for o in opps if (o.get("score") or 0) >= 30)
     age_s = (datetime.now(timezone.utc) - (parse_iso(last_refresh) or datetime.now(timezone.utc))).total_seconds()
     fresh = age_s < 6 * 3600
