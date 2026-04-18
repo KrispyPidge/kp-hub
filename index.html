@@ -1158,6 +1158,86 @@ footer .heart { color: var(--gold); }
     updateCountdown(); // refresh immediately, don't wait for tick
   }
 
+  // --- Podcast (RSS) ---------------------------------------------------
+  const PODCAST_FEED_URL = 'https://krispypidge.github.io/ai-podcast-feed/feed.xml';
+
+  function fmtDate(d) {
+    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
+  async function loadPodcast() {
+    let xml;
+    try {
+      const res = await fetch(PODCAST_FEED_URL, { cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      xml = new DOMParser().parseFromString(await res.text(), 'application/xml');
+      if (xml.querySelector('parsererror')) throw new Error('parse error');
+    } catch (e) {
+      console.warn('[hub] podcast feed unavailable:', e);
+      return; // leave static design intact
+    }
+
+    const item = xml.querySelector('channel > item');
+    if (!item) return;
+    const title = item.querySelector('title')?.textContent?.trim() || '';
+    const pubDateRaw = item.querySelector('pubDate')?.textContent?.trim();
+    const pubDate = pubDateRaw ? new Date(pubDateRaw) : null;
+    const enclosure = item.querySelector('enclosure');
+    const audioUrl = enclosure?.getAttribute('url') || '';
+    // itunes:duration — namespaced; getElementsByTagName works without prefix awareness
+    const dur = item.getElementsByTagName('itunes:duration')[0]?.textContent?.trim() || '';
+    const epNum = item.getElementsByTagName('itunes:episode')[0]?.textContent?.trim() || '';
+
+    // Bottom-row podcast card
+    const epEl = document.querySelector('.pod-ep');
+    const titleEl = document.querySelector('.pod-title');
+    const metaEl = document.querySelector('.pod-meta');
+    const timeEl = document.querySelector('.pod-time');
+    if (epEl) epEl.textContent = `${epNum ? `Ep ${epNum} · ` : ''}${pubDate ? fmtDate(pubDate) : ''}`;
+    if (titleEl) titleEl.textContent = title;
+    if (metaEl) metaEl.textContent = `${dur || '—'} · TTS · Bri`;
+    if (timeEl) timeEl.textContent = `00:00 / ${dur || '--:--'}`;
+
+    // Tile #5 status text
+    const tile = document.querySelector('.tile[data-app="ai_podcast_feed"] .tile-status-text');
+    if (tile && pubDate) {
+      const ago = Math.max(0, Math.floor((Date.now() - pubDate) / 86400000));
+      const when = ago === 0 ? 'today' : ago === 1 ? 'yesterday' : `${ago}d ago`;
+      tile.innerHTML = `<span style="color:var(--ok)">Published</span> · ep ${epNum || '?'} · ${when}`;
+    }
+
+    // Wire the play button to a real <audio> element (created lazily)
+    if (audioUrl) {
+      let audio = document.getElementById('pod-audio');
+      if (!audio) {
+        audio = document.createElement('audio');
+        audio.id = 'pod-audio';
+        audio.preload = 'none';
+        document.body.appendChild(audio);
+      }
+      audio.src = audioUrl;
+
+      const btn = document.querySelector('.play-btn');
+      if (btn && !btn.dataset.wired) {
+        btn.dataset.wired = '1';
+        btn.addEventListener('click', () => {
+          if (audio.paused) audio.play(); else audio.pause();
+        });
+        const fmtTime = s => {
+          if (!isFinite(s)) return '--:--';
+          const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+          return `${m}:${String(sec).padStart(2, '0')}`;
+        };
+        audio.addEventListener('timeupdate', () => {
+          if (timeEl) timeEl.textContent = `${fmtTime(audio.currentTime)} / ${fmtTime(audio.duration)}`;
+        });
+        audio.addEventListener('play', () => btn.setAttribute('aria-label', 'Pause'));
+        audio.addEventListener('pause', () => btn.setAttribute('aria-label', 'Play'));
+      }
+    }
+  }
+  loadPodcast(); // independent of status.json — fetch on boot
+
   async function loadStatus() {
     let status = null;
     try {
@@ -1176,9 +1256,6 @@ footer .heart { color: var(--gold); }
 
     // TODO v2: renderHero — Twitch live check via embed iframe events
     //   (see krispypidgeon.tv/twitch + player.twitch.tv postMessage API).
-    //
-    // TODO v2: renderPodcast(rss) — fetch feed.xml, parse latest <item>,
-    //   swap pod-title / pod-cover / audio src in the bottom-row tile.
     //
     // TODO v2: renderHivemindTopPick(status.apps.hivemind.top_pick) — swap
     //   game name, score ring value, reason text in the .hivemind section.
