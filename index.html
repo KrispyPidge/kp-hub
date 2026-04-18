@@ -1067,13 +1067,18 @@ footer .heart { color: var(--gold); }
     }
   }
 
-  // Live countdown (static target — Tue 18:30 BST next)
+  // Live countdown — target gets overridden by status.next_stream when loaded.
+  // Default fallback: next Tue 18:30 local (matches the design's static state).
+  window.__streamTarget = (() => {
+    const t = new Date();
+    t.setDate(t.getDate() + ((2 - t.getDay() + 7) % 7 || 7));
+    t.setHours(18, 30, 0, 0);
+    return t;
+  })();
+
   function updateCountdown() {
-    const target = new Date();
-    target.setDate(target.getDate() + ((2 - target.getDay() + 7) % 7 || 7));
-    target.setHours(18, 30, 0, 0);
-    let diff = target - new Date();
-    if (diff < 0) diff += 7 * 86400000;
+    let diff = window.__streamTarget - new Date();
+    if (diff < 0) diff = 0;
     const h = Math.floor(diff / 3600000);
     const m = Math.floor((diff % 3600000) / 60000);
     const s = Math.floor((diff % 60000) / 1000);
@@ -1145,12 +1150,20 @@ footer .heart { color: var(--gold); }
     return app.state || 'grey';
   }
 
+  function renderNextStream(ns) {
+    if (!ns || !ns.starts_at) return;
+    const target = new Date(ns.starts_at);
+    if (isNaN(target)) return;
+    window.__streamTarget = target;
+    updateCountdown(); // refresh immediately, don't wait for tick
+  }
+
   async function loadStatus() {
     let status = null;
     try {
       status = await fetch('status.json', { cache: 'no-store' }).then(r => r.json());
     } catch (e) {
-      // graceful: leave all heartbeat tiles grey
+      // graceful: leave all heartbeat tiles grey, keep static countdown
       document.querySelectorAll('.tile[data-app]').forEach(t => applyState(t, 'grey'));
       return;
     }
@@ -1159,23 +1172,20 @@ footer .heart { color: var(--gold); }
       if (!tile) return;
       applyState(tile, deriveState(appKey, app), app.message);
     });
+    renderNextStream(status.next_stream);
 
-    // TODO v2: renderHero(twitch, gcal)
-    //   - Twitch live check: embed iframe at krispypidgeon.tv/twitch and
-    //     listen for player events, OR poll a cached twitch-status.json.
-    //   - GCal countdown already runs above; replace static Tue 18:30
-    //     target with parsed next event from public ICS URL.
+    // TODO v2: renderHero — Twitch live check via embed iframe events
+    //   (see krispypidgeon.tv/twitch + player.twitch.tv postMessage API).
     //
-    // TODO v2: renderPodcast(rss)
-    //   - fetch feed.xml, parse latest <item>, swap pod-title/pod-cover/audio src.
+    // TODO v2: renderPodcast(rss) — fetch feed.xml, parse latest <item>,
+    //   swap pod-title / pod-cover / audio src in the bottom-row tile.
     //
-    // TODO v2: renderHivemindTopPick(status.apps.hivemind.top_pick)
-    //   - swap game name, score ring value, reason text in the .hivemind section.
+    // TODO v2: renderHivemindTopPick(status.apps.hivemind.top_pick) — swap
+    //   game name, score ring value, reason text in the .hivemind section.
   }
 
-  // Activate when ready:
-  // loadStatus();
-  // setInterval(loadStatus, 120_000); // 2 min refresh per spec §4
+  loadStatus();
+  setInterval(loadStatus, 120_000); // 2 min refresh per spec §4
 </script>
 </body>
 </html>

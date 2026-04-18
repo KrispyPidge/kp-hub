@@ -1,0 +1,2 @@
+icalendar>=7.0
+recurring-ical-events>=3.0

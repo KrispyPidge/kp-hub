@@ -19,15 +19,30 @@ via GitHub Pages. No backend.
 
 ## v2 wiring status
 
-The `<script>` block at the bottom of `index.html` contains the `loadStatus()`
-skeleton with all fetches stubbed and the call commented out. To activate:
+`loadStatus()` runs on page load + every 2 min. It reads `status.json` and:
 
-1. Uncomment `loadStatus()` + `setInterval(loadStatus, 120_000)` at the bottom
-   of `index.html`.
-2. Fill in the per-app readers in `scripts/update-hub-status.py`.
-3. Schedule the aggregator (every 15 min) — see below.
+- ✅ **Countdown** — driven by `status.next_stream` (parsed from public GCal ICS
+  by the aggregator). Falls back to "next Tuesday 18:30 local" if status.json is
+  missing or has no `next_stream` field.
+- ⏳ **Tile heartbeats** — only updates tiles for apps present in `status.apps`.
+  Currently empty (all readers in `update-hub-status.py` return `None`); tiles
+  render as designed until each reader is filled in.
+- ⏳ **Twitch live pill** — TODO, embed iframe approach.
+- ⏳ **Podcast RSS embed** — TODO, fetch feed.xml client-side.
+- ⏳ **Hivemind top pick swap** — TODO, reads from `status.apps.hivemind.top_pick`.
 
 See `../KrispyPidgeon_Hub_v2_LiveStatus_Spec.md` for the full contract.
+
+## Aggregator install
+
+```
+pip install -r scripts/requirements.txt
+```
+
+Test run (writes status.json, doesn't push):
+```
+python scripts/update-hub-status.py --no-push
+```
 
 ## Schedule (when ready)
 

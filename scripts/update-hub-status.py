@@ -19,8 +19,17 @@ import json
 import os
 import subprocess
 import sys
-from datetime import datetime, timezone
+import urllib.request
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
+# Optional deps (pip install icalendar recurring-ical-events)
+try:
+    from icalendar import Calendar
+    import recurring_ical_events
+    ICAL_AVAILABLE = True
+except ImportError:
+    ICAL_AVAILABLE = False
 
 # ---------------------------------------------------------------------------
 # Config
@@ -28,6 +37,14 @@ from pathlib import Path
 
 REPO_DIR = Path(__file__).resolve().parent.parent  # kp-hub/
 STATUS_FILE = REPO_DIR / "status.json"
+
+# Public Google Calendar ICS for KrispyPidgeon stream schedule.
+ICS_URL = (
+    "https://calendar.google.com/calendar/ical/"
+    "379d6186770e506184270e1ee02c0778db609888e564d221a5d2906a6c61fa74"
+    "%40group.calendar.google.com/public/basic.ics"
+)
+ICS_LOOKAHEAD_DAYS = 21
 
 # Per-spec local app state locations. Fill in as apps come online.
 # Examples (uncomment when ready):
@@ -82,6 +99,41 @@ def read_content_pipeline() -> dict | None:
 
 
 # ---------------------------------------------------------------------------
+# Calendar — fetch + parse the public ICS, return the soonest future event.
+# ---------------------------------------------------------------------------
+
+def fetch_next_stream() -> dict | None:
+    if not ICAL_AVAILABLE:
+        print("[hub] icalendar not installed — skipping next-stream lookup", file=sys.stderr)
+        return None
+    try:
+        req = urllib.request.Request(ICS_URL, headers={"User-Agent": "kp-hub/1.0"})
+        text = urllib.request.urlopen(req, timeout=15).read()
+        cal = Calendar.from_ical(text)
+        now = datetime.now(timezone.utc)
+        events = recurring_ical_events.of(cal).between(
+            now, now + timedelta(days=ICS_LOOKAHEAD_DAYS)
+        )
+        events.sort(key=lambda e: e["DTSTART"].dt)
+        for ev in events:
+            dt = ev["DTSTART"].dt
+            if hasattr(dt, "astimezone"):
+                dt_utc = dt.astimezone(timezone.utc)
+            else:
+                # all-day event — treat as midnight UTC
+                dt_utc = datetime.combine(dt, datetime.min.time(), tzinfo=timezone.utc)
+            if dt_utc <= now:
+                continue
+            return {
+                "starts_at": utc_iso(dt_utc),
+                "summary": str(ev.get("SUMMARY", "Stream")),
+            }
+    except Exception as e:
+        print(f"[hub] next-stream fetch failed: {e}", file=sys.stderr)
+    return None
+
+
+# ---------------------------------------------------------------------------
 # Aggregate + write
 # ---------------------------------------------------------------------------
 
@@ -102,11 +154,15 @@ def build_status() -> dict:
         if block is not None:
             apps[key] = block
 
-    return {"updated_at": utc_iso(), "apps": apps}
+    out: dict = {"updated_at": utc_iso(), "apps": apps}
+    next_stream = fetch_next_stream()
+    if next_stream:
+        out["next_stream"] = next_stream
+    return out
 
 
 def write_status(status: dict) -> None:
-    STATUS_FILE.write_text(json.dumps(status, indent=2, ensure_ascii=False))
+    STATUS_FILE.write_text(json.dumps(status, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"[hub] wrote {STATUS_FILE} ({len(status.get('apps', {}))} apps)")
 
 

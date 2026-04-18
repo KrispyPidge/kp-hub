@@ -1,38 +1,8 @@
 {
-  "updated_at": "2026-04-18T20:45:00Z",
-  "apps": {
-    "streamclipper": {
-      "state": "green",
-      "last_run_at": "2026-04-18T18:30:00Z",
-      "message": "Running · :8420 · last run 2h ago · 7 clips",
-      "metric": { "label": "clips last 7d", "value": 42 }
-    },
-    "thumbnail_generator": {
-      "state": "amber",
-      "last_run_at": "2026-04-17T20:00:00Z",
-      "message": "Idle · port taken · last: Valorant thumb 11h ago",
-      "metric": { "label": "last thumbnail", "value": "Valorant" }
-    },
-    "hivemind": {
-      "state": "green",
-      "last_run_at": "2026-04-18T18:02:00Z",
-      "message": "Fresh · cache 2h 12m · 11 picks ≥ 30",
-      "metric": { "label": "hot picks (\u226530)", "value": 38 },
-      "top_pick": {
-        "game": "Crimson Desert",
-        "score": 84,
-        "reason": "Weekend patch + rising Reddit buzz"
-      }
-    },
-    "stream_prep_autopilot": {
-      "state": "green",
-      "next_fire_at": "2026-04-21T18:00:00Z",
-      "message": "Armed · next fire Tue 18:00 · 15h 16m"
-    },
-    "content_pipeline": {
-      "state": "amber",
-      "message": "Paused — awaiting Alfred handover",
-      "counts": { "ideas": 12, "scheduled": 3, "live": 0 }
-    }
+  "updated_at": "2026-04-18T21:10:40Z",
+  "apps": {},
+  "next_stream": {
+    "starts_at": "2026-04-21T17:30:00Z",
+    "summary": "🔴 KrispyPidgeon LIVE — Marathon"
   }
 }
