@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-04-18T23:23:04Z",
+  "updated_at": "2026-04-18T23:38:04Z",
   "supervisor_reachable": true,
   "apps": {
     "streamclipper": {
@@ -12,8 +12,8 @@
       }
     },
     "thumbnail_generator": {
-      "state": "grey",
-      "message": "Idle · ready to launch · last: God Of War Ragnarok thumb 13d ago",
+      "state": "green",
+      "message": "Running · :8421 · last: God Of War Ragnarok thumb 13d ago",
       "last_run_at": "2026-04-05T02:43:50Z",
       "metric": {
         "label": "last thumbnail",
@@ -22,8 +22,8 @@
     },
     "hivemind": {
       "state": "green",
-      "last_run_at": "2026-04-18T23:11:47.580Z",
-      "message": "Fresh · cache 11m old · 30 picks ≥30",
+      "last_run_at": "2026-04-18T23:34:27.429Z",
+      "message": "Fresh · cache 3m old · 30 picks ≥30",
       "metric": {
         "label": "hot picks (≥30)",
         "value": 30
@@ -58,5 +58,21 @@
   "next_stream": {
     "starts_at": "2026-04-21T17:30:00Z",
     "summary": "🔴 KrispyPidgeon LIVE — Marathon"
-  }
+  },
+  "watchlist_top3": [
+    {
+      "game": "Slay the Spire 2",
+      "score": 84,
+      "image": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2868840/b0958d387dc366211e0f353443710cfcf9fdb020/header.jpg?t=1773851542",
+      "tracked": true,
+      "twitch_viewers": null,
+      "twitch_ratio": null
+    },
+    {
+      "game": "Schedule 1",
+      "score": null,
+      "image": null,
+      "tracked": false
+    }
+  ]
 }
