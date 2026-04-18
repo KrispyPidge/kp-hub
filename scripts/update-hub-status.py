@@ -93,6 +93,7 @@ STREAMCLIPPER_HISTORY = Path("C:/Users/djbla/streamclip/dashboard/batch_history.
 HIVEMIND_CACHE       = Path("C:/Users/djbla/OneDrive/Documents/Claude/Projects/Vibe Coding Chris Brain/content-pipeline/hivemind-cache.json")
 THUMB_OUTPUT_DIR     = Path("C:/Users/djbla/OneDrive/Documents/Claude/Projects/Vibe Coding Chris Brain/thumbnail-generator/output")
 CONTENT_LEDGER_DIR   = Path("C:/Users/djbla/OneDrive/Documents/Claude/Projects/Vibe Coding Chris Brain/content-pipeline/ledger")
+WATCHLIST_FILE       = Path("C:/Users/djbla/OneDrive/Documents/Claude/Projects/Vibe Coding Chris Brain/content-pipeline/watchlist.json")
 
 # kp-supervisor — local launcher service. Queried for live process state.
 SUPERVISOR_URL = "http://localhost:8090/apps"
@@ -324,6 +325,62 @@ def fetch_next_stream() -> dict | None:
 # Aggregate + write
 # ---------------------------------------------------------------------------
 
+def build_watchlist_top3() -> list[dict] | None:
+    """Read watchlist.json and cross-reference with hivemind-cache for live scores.
+
+    Returns the top 3 tracked items (by live Hivemind score desc) plus untracked
+    items if there's room. Untracked entries get score=None and are ordered last.
+    """
+    if not WATCHLIST_FILE.exists():
+        return None
+    try:
+        wl = json.loads(WATCHLIST_FILE.read_text(encoding="utf-8"))
+    except Exception as e:
+        print(f"[hub] watchlist parse failed: {e}", file=sys.stderr)
+        return None
+
+    items = wl.get("items") or []
+    if not items:
+        return []
+
+    score_map: dict[str, dict] = {}
+    if HIVEMIND_CACHE.exists():
+        try:
+            cache = json.loads(HIVEMIND_CACHE.read_text(encoding="utf-8"))
+            for opp in cache.get("opportunities", []):
+                key = str(opp.get("game", "")).strip().lower()
+                if key and key not in score_map:
+                    score_map[key] = opp
+        except Exception:
+            pass
+
+    enriched: list[dict] = []
+    for it in items:
+        name = str(it.get("game", "")).strip()
+        key = name.lower()
+        live = score_map.get(key)
+        entry = {
+            "game": name,
+            "score": (live.get("score") if live else None),
+            "image": (it.get("headerImage") or (live.get("headerImage") if live else None)),
+            "tracked": live is not None,
+        }
+        if live:
+            tw = live.get("twitch") or {}
+            entry["twitch_viewers"] = tw.get("viewers")
+            entry["twitch_ratio"] = tw.get("ratio")
+        enriched.append(entry)
+
+    enriched.sort(
+        key=lambda x: (
+            0 if x["tracked"] else 1,
+            -(x["score"] or 0),
+            x["game"].lower(),
+        )
+    )
+    return enriched[:3]
+
+
 def build_status() -> dict:
     global _LIVE_STATE
     _LIVE_STATE = fetch_supervisor_state()
@@ -352,6 +409,9 @@ def build_status() -> dict:
     next_stream = fetch_next_stream()
     if next_stream:
         out["next_stream"] = next_stream
+    wl = build_watchlist_top3()
+    if wl is not None:
+        out["watchlist_top3"] = wl
     return out
 
 

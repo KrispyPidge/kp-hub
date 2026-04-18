@@ -140,6 +140,71 @@ main { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; paddin
 .tb-btn.primary { background: var(--gold); color: #111; border-color: var(--gold); font-weight: 600; }
 .tb-btn.primary:hover { background: #F0C35A; }
 
+/* Watchlist row */
+.wl-row {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px; margin-bottom: 26px;
+}
+.wl-card {
+  display: grid; grid-template-columns: 72px 1fr auto; gap: 12px;
+  align-items: center; padding: 10px 14px 10px 10px;
+  background: var(--bg-1); border: 1px solid var(--line-2);
+  border-radius: 10px; transition: border-color .15s, transform .15s;
+}
+.wl-card:hover { border-color: var(--line-3); transform: translateY(-1px); }
+.wl-art {
+  width: 72px; aspect-ratio: 460/215; border-radius: 6px;
+  background: linear-gradient(135deg, #1a1a24, #0e0e14); background-size: cover; background-position: center;
+}
+.wl-body { min-width: 0; }
+.wl-name { font-weight: 600; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wl-meta { font-size: 11px; color: var(--text-3); margin-top: 2px; font-family: 'JetBrains Mono', monospace; }
+.wl-score {
+  min-width: 42px; height: 32px; border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 14px;
+  color: #0a0a0f; padding: 0 8px;
+}
+.wl-score.untracked { background: #2a2a36; color: var(--text-3); font-weight: 500; font-size: 10px; letter-spacing: 0.08em; }
+.wl-empty {
+  grid-column: 1 / -1; color: var(--text-3); font-size: 12.5px;
+  padding: 18px; border: 1px dashed var(--line-2); border-radius: 10px; text-align: center;
+}
+
+/* Go-live dropdown */
+.dropdown-wrap { position: relative; display: inline-block; }
+.dropdown-panel {
+  position: absolute; top: calc(100% + 6px); right: 0;
+  min-width: 320px; background: var(--bg-1); border: 1px solid var(--line-2);
+  border-radius: 10px; box-shadow: 0 12px 36px rgba(0,0,0,0.55);
+  padding: 14px; z-index: 50;
+  opacity: 0; transform: translateY(-4px) scale(0.98);
+  pointer-events: none; transition: opacity .15s, transform .15s;
+}
+.dropdown-panel.open { opacity: 1; transform: none; pointer-events: auto; }
+.dd-label { font-size: 10.5px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; font-family: 'JetBrains Mono', monospace; }
+.dd-sec { padding: 4px 0; }
+.dd-scheduled { font-size: 13px; color: var(--text); margin-bottom: 8px; font-weight: 500; }
+.dd-divider { height: 1px; background: var(--line); margin: 10px 0; }
+.dd-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 7px 12px; background: var(--bg-2); border: 1px solid var(--line-2);
+  border-radius: 7px; color: var(--text); font-size: 12.5px; cursor: pointer;
+  font-family: inherit; width: 100%;
+}
+.dd-btn:hover:not([disabled]) { border-color: var(--line-3); background: var(--bg-3); }
+.dd-btn.primary { background: var(--purple); border-color: var(--purple); color: #0a0a0f; font-weight: 600; }
+.dd-btn.primary:hover:not([disabled]) { background: #b89cfb; border-color: #b89cfb; }
+.dd-btn[disabled] { opacity: 0.45; cursor: not-allowed; }
+.dd-form { display: flex; gap: 6px; }
+.dd-form input {
+  flex: 1; background: var(--bg); border: 1px solid var(--line-2);
+  border-radius: 7px; padding: 7px 10px; color: var(--text);
+  font-size: 12.5px; font-family: inherit;
+}
+.dd-form input:focus { outline: none; border-color: var(--purple); }
+.dd-form .dd-btn { flex: 0 0 auto; width: auto; padding: 7px 14px; }
+
 /* ───────── Hero ───────── */
 .hero {
   position: relative;
@@ -686,7 +751,24 @@ footer .heart { color: var(--gold); }
       <span class="tb-dot"></span>
       <span id="supervisor-status" title="Local launcher (kp-supervisor :8090)"><span id="supervisor-dot" class="status-dot grey" style="display:inline-block;vertical-align:middle;margin-right:6px"></span><span class="mono" style="color:var(--text-3)">launcher</span></span>
       <button class="tb-btn" id="refresh-btn" onclick="refreshAll(event)" title="Re-fetch status, podcast feed and supervisor health"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a9 9 0 0 1-9 9 9 9 0 0 1-8.05-5M3 12a9 9 0 0 1 9-9 9 9 0 0 1 8.05 5"/><path d="M21 3v5h-5M3 21v-5h5"/></svg> Refresh</button>
-      <button class="tb-btn primary" onclick="openGoLiveChecklist(event)" title="Copies /stream-prep and scrolls to the Stream Prep tile">Go live checklist</button>
+      <div class="dropdown-wrap" id="go-live-wrap">
+        <button class="tb-btn primary" onclick="toggleGoLiveDropdown(event)" title="Prep copy for a scheduled or impromptu stream">Go live checklist ▾</button>
+        <div class="dropdown-panel" id="go-live-panel" role="menu" aria-hidden="true">
+          <div class="dd-sec">
+            <div class="dd-label">Scheduled stream</div>
+            <div class="dd-scheduled" id="go-live-scheduled"><span class="mono" style="color:var(--text-3)">—</span></div>
+            <button class="dd-btn primary" id="go-live-prep-scheduled" onclick="prepScheduled(event)" disabled>Prep for this stream</button>
+          </div>
+          <div class="dd-divider"></div>
+          <div class="dd-sec">
+            <div class="dd-label">Impromptu — playing something else?</div>
+            <form class="dd-form" onsubmit="prepImpromptu(event); return false;">
+              <input type="text" id="go-live-game" placeholder="Game name…" autocomplete="off" maxlength="80">
+              <button type="submit" class="dd-btn">Prep</button>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -936,8 +1018,17 @@ footer .heart { color: var(--gold); }
         <div class="row"><span class="k">Twitch</span><span>2.1×</span></div>
         <div class="row"><span class="k">Competition</span><span style="color:var(--ok)">low</span></div>
       </div>
-      <button class="hm-cta">Add to pipeline →</button>
+      <button class="hm-cta" onclick="addTopPickToWatchlist(event)">Add to watchlist →</button>
     </div>
+  </section>
+
+  <!-- Watchlist -->
+  <div class="sec-head">
+    <h2>Watchlist · games you're eyeing</h2>
+    <div class="right"><a href="http://localhost:8090/viewers/watchlist" target="_blank" rel="noopener" style="color:var(--text-2);text-decoration:none">Open full list →</a></div>
+  </div>
+  <section class="wl-row" id="watchlist-row">
+    <div class="wl-empty">Nothing on the watchlist yet. Hit "Add to watchlist" on the Hivemind top pick, or add games manually at <span class="mono">localhost:8090/viewers/watchlist</span>.</div>
   </section>
 
   <!-- Bottom grid -->
@@ -1189,6 +1280,35 @@ footer .heart { color: var(--gold); }
     }
   }
 
+  // --- Watchlist ------------------------------------------------------
+  async function addTopPickToWatchlist(ev) {
+    const btn = ev.currentTarget;
+    const top = window.__hivemindTopPick;
+    if (!top || !top.game) { _flashBtn(btn, '⚠ no pick yet'); return; }
+    const payload = { game: top.game };
+    if (top.image) payload.headerImage = top.image;
+    btn.disabled = true;
+    const original = btn.innerHTML;
+    btn.innerHTML = 'Adding…';
+    try {
+      const res = await fetch(`${SUPERVISOR_BASE}/watchlist`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      btn.innerHTML = data.added ? '✓ Added to watchlist' : '✓ Already watching';
+      // Refresh the watchlist card on the hub immediately
+      if (typeof loadWatchlist === 'function') loadWatchlist();
+    } catch {
+      btn.innerHTML = '⚠ launcher offline';
+    } finally {
+      setTimeout(() => { btn.innerHTML = original; btn.disabled = false; }, 2200);
+    }
+  }
+  window.addTopPickToWatchlist = addTopPickToWatchlist;
+
   // --- AI Podcast Feed tile actions -----------------------------------
   const PODCAST_PAGE_URL = 'https://krispypidge.github.io/ai-podcast-feed/';
 
@@ -1266,22 +1386,105 @@ footer .heart { color: var(--gold); }
   }
   window.refreshAll = refreshAll;
 
-  function openGoLiveChecklist(ev) {
-    const tile = document.querySelector('.tile[data-app="stream_prep_autopilot"]');
-    if (!tile) return;
-    // Flash the tile so the user knows where to go next.
-    tile.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    tile.style.transition = 'box-shadow .3s ease-out';
-    tile.style.boxShadow = '0 0 0 2px var(--purple), 0 0 30px rgba(167,139,250,0.35)';
-    setTimeout(() => { tile.style.boxShadow = ''; }, 1600);
-    // Also copy the command so the user can paste into Claude Code immediately.
-    const copyBtn = tile.querySelector('.tile-cta');
-    if (copyBtn) {
-      const synthetic = { currentTarget: copyBtn };
-      copyStreamPrep(synthetic);
+  // Go-live-checklist dropdown ----------------------------------------
+  function toggleGoLiveDropdown(ev) {
+    ev.stopPropagation();
+    const panel = document.getElementById('go-live-panel');
+    if (!panel) return;
+    const open = panel.classList.toggle('open');
+    panel.setAttribute('aria-hidden', String(!open));
+    if (open) {
+      refreshGoLivePanel();
+      setTimeout(() => document.getElementById('go-live-game')?.focus(), 120);
     }
   }
-  window.openGoLiveChecklist = openGoLiveChecklist;
+  window.toggleGoLiveDropdown = toggleGoLiveDropdown;
+
+  function refreshGoLivePanel() {
+    const ns = window.__nextStream;
+    const schedEl = document.getElementById('go-live-scheduled');
+    const btn = document.getElementById('go-live-prep-scheduled');
+    if (ns && ns.starts_at) {
+      const t = new Date(ns.starts_at);
+      const dayTime = t.toLocaleDateString('en-GB', {
+        weekday: 'short', day: '2-digit', month: 'short',
+      }) + ' · ' + t.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+      const summary = (ns.summary || 'Stream').replace(/[<>]/g, '');
+      if (schedEl) schedEl.innerHTML = `<span>${summary}</span> <span class="mono" style="color:var(--text-3);margin-left:4px">${dayTime}</span>`;
+      if (btn) btn.disabled = false;
+    } else {
+      if (schedEl) schedEl.innerHTML = `<span class="mono" style="color:var(--text-3)">No stream in next 14 days</span>`;
+      if (btn) btn.disabled = true;
+    }
+  }
+
+  async function prepScheduled(ev) {
+    const btn = ev.currentTarget;
+    const ns = window.__nextStream;
+    if (!ns || !ns.starts_at) return;
+    const starts = new Date(ns.starts_at).toISOString();
+    const game = (ns.summary || '').trim();
+    const gameArg = game ? ` game:"${game.replace(/"/g, '\\"')}"` : '';
+    const cmd = `/stream-prep when:${starts}${gameArg}`;
+    await _copyAndFlash(btn, cmd, 'Copied — paste in Cowork/Claude Code');
+    _closeGoLive();
+  }
+  window.prepScheduled = prepScheduled;
+
+  async function prepImpromptu(ev) {
+    const input = document.getElementById('go-live-game');
+    const game = (input?.value || '').trim();
+    if (!game) {
+      input?.focus();
+      return;
+    }
+    const cmd = `/stream-prep game:"${game.replace(/"/g, '\\"')}"`;
+    const submitBtn = ev.target.querySelector('button[type="submit"]') || ev.target;
+    await _copyAndFlash(submitBtn, cmd, 'Copied — paste in Cowork/Claude Code');
+    if (input) input.value = '';
+    _closeGoLive();
+  }
+  window.prepImpromptu = prepImpromptu;
+
+  async function _copyAndFlash(btn, text, okMsg) {
+    const original = btn.innerHTML;
+    btn.disabled = true;
+    try {
+      await navigator.clipboard.writeText(text);
+      btn.innerHTML = '✓ ' + okMsg;
+    } catch {
+      btn.innerHTML = '⚠ clipboard blocked';
+    }
+    setTimeout(() => { btn.innerHTML = original; btn.disabled = false; }, 2000);
+  }
+
+  function _closeGoLive() {
+    const panel = document.getElementById('go-live-panel');
+    if (!panel) return;
+    setTimeout(() => {
+      panel.classList.remove('open');
+      panel.setAttribute('aria-hidden', 'true');
+    }, 1400);
+  }
+
+  // Close on outside click / Escape
+  document.addEventListener('click', (e) => {
+    const wrap = document.getElementById('go-live-wrap');
+    const panel = document.getElementById('go-live-panel');
+    if (wrap && panel && panel.classList.contains('open') && !wrap.contains(e.target)) {
+      panel.classList.remove('open');
+      panel.setAttribute('aria-hidden', 'true');
+    }
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const panel = document.getElementById('go-live-panel');
+      if (panel?.classList.contains('open')) {
+        panel.classList.remove('open');
+        panel.setAttribute('aria-hidden', 'true');
+      }
+    }
+  });
 
   // --- /stream-prep clipboard helper ----------------------------------
   // Static hub can't invoke Claude Code directly — copy the slash command
@@ -1449,7 +1652,71 @@ footer .heart { color: var(--gold); }
     if (status.apps?.hivemind?.top_pick) renderHivemindTopPick(status.apps.hivemind.top_pick);
     if (status.apps?.content_pipeline?.counts) renderContentPipelineCounts(status.apps.content_pipeline.counts);
     renderHeroReadout(status);
+    renderWatchlistRow(status.watchlist_top3);
   }
+
+  function renderWatchlistRow(items) {
+    const row = document.getElementById('watchlist-row');
+    if (!row) return;
+    if (!Array.isArray(items) || items.length === 0) {
+      row.innerHTML = `<div class="wl-empty">Nothing on the watchlist yet. Hit "Add to watchlist" on the Hivemind top pick, or add games manually at <span class="mono">localhost:8090/viewers/watchlist</span>.</div>`;
+      return;
+    }
+    const scoreColor = (s) => {
+      const n = Number(s) || 0;
+      if (n >= 80) return 'var(--ok)';
+      if (n >= 50) return 'var(--gold)';
+      if (n >= 30) return 'var(--purple)';
+      return '#555';
+    };
+    row.innerHTML = items.map(it => {
+      const game = String(it.game || '').replace(/[<>]/g, '');
+      const art = it.image ? `background-image:url("${String(it.image).replace(/"/g, '\\"')}")` : '';
+      const meta = it.tracked
+        ? `Hivemind · ${(it.twitch_viewers != null) ? it.twitch_viewers + ' viewers' : 'tracked'}`
+        : 'Not in Hivemind yet';
+      const score = it.tracked
+        ? `<div class="wl-score" style="background:${scoreColor(it.score)}">${Math.round(Number(it.score) || 0)}</div>`
+        : `<div class="wl-score untracked">UNTRACKED</div>`;
+      return `
+        <div class="wl-card">
+          <div class="wl-art" style="${art}"></div>
+          <div class="wl-body">
+            <div class="wl-name">${game}</div>
+            <div class="wl-meta">${meta}</div>
+          </div>
+          ${score}
+        </div>`;
+    }).join('');
+  }
+
+  async function loadWatchlist() {
+    // Ask the supervisor directly for live watchlist state so the hub
+    // updates immediately after Add/Remove without waiting 15 min for the
+    // aggregator to rewrite status.json.
+    try {
+      const res = await fetch(`${SUPERVISOR_BASE}/watchlist`, { cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const top3 = (data.items || [])
+        .map(it => {
+          const tw = it.liveTwitch || {};
+          return {
+            game: it.game,
+            score: it.liveScore,
+            image: it.headerImage,
+            tracked: !!it.inHivemind,
+            twitch_viewers: tw.viewers ?? null,
+            twitch_ratio: tw.ratio ?? null,
+          };
+        })
+        .slice(0, 3);
+      renderWatchlistRow(top3);
+    } catch {
+      // supervisor offline → fall back to whatever's in status.json
+    }
+  }
+  window.loadWatchlist = loadWatchlist;
 
   // --- Hero readout cells -------------------------------------------
   function fmtAgo(isoOrDate) {
@@ -1503,6 +1770,7 @@ footer .heart { color: var(--gold); }
   // --- Hivemind top pick swap ----------------------------------------
   function renderHivemindTopPick(top) {
     if (!top) return;
+    window.__hivemindTopPick = top; // for "Add to watchlist"
     const game = top.game || '—';
     const score = Math.max(0, Math.min(100, Number(top.score) || 0));
 
