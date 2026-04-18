@@ -94,15 +94,44 @@ HIVEMIND_CACHE       = Path("C:/Users/djbla/OneDrive/Documents/Claude/Projects/V
 THUMB_OUTPUT_DIR     = Path("C:/Users/djbla/OneDrive/Documents/Claude/Projects/Vibe Coding Chris Brain/thumbnail-generator/output")
 CONTENT_LEDGER_DIR   = Path("C:/Users/djbla/OneDrive/Documents/Claude/Projects/Vibe Coding Chris Brain/content-pipeline/ledger")
 
+# kp-supervisor — local launcher service. Queried for live process state.
+SUPERVISOR_URL = "http://localhost:8090/apps"
+
+
+def fetch_supervisor_state() -> dict | None:
+    """Return {key: {state, port, ...}} or None if the supervisor is offline."""
+    try:
+        req = urllib.request.Request(SUPERVISOR_URL, headers={"User-Agent": "kp-hub/1.0"})
+        with urllib.request.urlopen(req, timeout=2) as r:
+            return json.loads(r.read().decode("utf-8"))
+    except Exception as e:
+        print(f"[hub] supervisor unreachable ({e}) — skipping live state", file=sys.stderr)
+        return None
+
+
+# Populated once per run by build_status(); read by the per-app readers.
+_LIVE_STATE: dict | None = None
+
+
+def live(key: str) -> dict | None:
+    """Shortcut: supervisor's entry for one app, or None."""
+    if not _LIVE_STATE:
+        return None
+    return _LIVE_STATE.get(key)
+
 
 def read_streamclipper() -> dict | None:
     if not STREAMCLIPPER_HISTORY.exists():
+        # Even with no history, reflect live process state if we have it.
+        lv = live("streamclipper")
+        if lv and lv.get("state") == "running":
+            return {"state": "green", "message": f"Running · :{lv.get('port', 8420)} · no batch history yet"}
         return None
     data = json.loads(STREAMCLIPPER_HISTORY.read_text(encoding="utf-8"))
     runs = data.get("processed", [])
-    if not runs:
+    if not runs and not live("streamclipper"):
         return None
-    latest = max(runs, key=lambda r: r.get("processed_at", ""))
+    latest = max(runs, key=lambda r: r.get("processed_at", "")) if runs else {}
     last_run = parse_iso(latest.get("processed_at"))
     cutoff = datetime.now(timezone.utc) - timedelta(days=7)
     clips_7d = sum(
@@ -110,32 +139,66 @@ def read_streamclipper() -> dict | None:
         if (parse_iso(r.get("processed_at")) or datetime.min.replace(tzinfo=timezone.utc)) > cutoff
     )
     age_s = (datetime.now(timezone.utc) - last_run).total_seconds() if last_run else 0
+
+    lv = live("streamclipper")
+    is_running = bool(lv and lv.get("state") == "running")
+    port = (lv or {}).get("port", 8420)
+    if is_running:
+        head = f"Running · :{port}"
+        state = "green"
+    else:
+        head = "Idle"
+        state = "amber"
+    tail = f"last run {fmt_age(age_s)} ago · {clips_7d} clips/7d" if last_run else "no runs yet"
+
     return {
-        "state": "green",
+        "state": state,
         "last_run_at": utc_iso(last_run) if last_run else None,
-        "message": f"Running · :8420 · last run {fmt_age(age_s)} ago · {clips_7d} clips/7d",
+        "message": f"{head} · {tail}",
         "metric": {"label": "clips last 7d", "value": clips_7d},
     }
 
 
 def read_thumbnail_generator() -> dict | None:
-    if not THUMB_OUTPUT_DIR.exists():
+    lv = live("thumbnail_generator")
+    is_running = bool(lv and lv.get("state") == "running")
+    port = (lv or {}).get("port", 8421)
+
+    pngs: list[Path] = []
+    if THUMB_OUTPUT_DIR.exists():
+        pngs = list(THUMB_OUTPUT_DIR.glob("*.png"))
+
+    if not pngs and not is_running:
         return None
-    pngs = list(THUMB_OUTPUT_DIR.glob("*.png"))
-    if not pngs:
-        return None
-    latest = max(pngs, key=lambda p: p.stat().st_mtime)
-    mtime = datetime.fromtimestamp(latest.stat().st_mtime, tz=timezone.utc)
-    age_h = (datetime.now(timezone.utc) - mtime).total_seconds() / 3600
-    # filename pattern: thumb_<game_with_underscores>.png
-    stem = latest.stem.replace("thumb_", "", 1)
-    game = stem.replace("_", " ").title()
-    return {
-        "state": "amber",  # port clash with StreamClipper per spec
-        "last_run_at": utc_iso(mtime),
-        "message": f"Idle · :8420 taken · last: {game} thumb {fmt_age(age_h * 3600)} ago",
-        "metric": {"label": "last thumbnail", "value": game},
+
+    if pngs:
+        latest = max(pngs, key=lambda p: p.stat().st_mtime)
+        mtime = datetime.fromtimestamp(latest.stat().st_mtime, tz=timezone.utc)
+        age_s = (datetime.now(timezone.utc) - mtime).total_seconds()
+        stem = latest.stem.replace("thumb_", "", 1)
+        game = stem.replace("_", " ").title()
+        tail = f"last: {game} thumb {fmt_age(age_s)} ago"
+    else:
+        mtime = None
+        game = None
+        tail = "no thumbnails generated yet"
+
+    if is_running:
+        head = f"Running · :{port}"
+        state = "green"
+    else:
+        head = "Idle · ready to launch"
+        state = "grey"
+
+    block: dict = {
+        "state": state,
+        "message": f"{head} · {tail}",
     }
+    if mtime is not None:
+        block["last_run_at"] = utc_iso(mtime)
+    if game is not None:
+        block["metric"] = {"label": "last thumbnail", "value": game}
+    return block
 
 
 def _hivemind_reason(top: dict) -> str:
@@ -262,6 +325,9 @@ def fetch_next_stream() -> dict | None:
 # ---------------------------------------------------------------------------
 
 def build_status() -> dict:
+    global _LIVE_STATE
+    _LIVE_STATE = fetch_supervisor_state()
+
     apps: dict[str, dict] = {}
     readers = {
         "streamclipper":         read_streamclipper,
@@ -278,7 +344,11 @@ def build_status() -> dict:
         if block is not None:
             apps[key] = block
 
-    out: dict = {"updated_at": utc_iso(), "apps": apps}
+    out: dict = {
+        "updated_at": utc_iso(),
+        "supervisor_reachable": _LIVE_STATE is not None,
+        "apps": apps,
+    }
     next_stream = fetch_next_stream()
     if next_stream:
         out["next_stream"] = next_stream
