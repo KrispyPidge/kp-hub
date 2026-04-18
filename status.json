@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-04-18T21:53:01Z",
+  "updated_at": "2026-04-18T22:08:01Z",
   "apps": {
     "streamclipper": {
       "state": "green",
@@ -20,33 +20,33 @@
       }
     },
     "hivemind": {
-      "state": "amber",
-      "last_run_at": "2026-04-07T17:36:03.353Z",
-      "message": "Stale · cache 11d old · 30 picks ≥30",
+      "state": "green",
+      "last_run_at": "2026-04-18T22:05:33.696Z",
+      "message": "Fresh · cache 2m old · 30 picks ≥30",
       "metric": {
         "label": "hot picks (≥30)",
         "value": 30
       },
       "top_pick": {
-        "game": "Crimson Desert",
-        "score": 77,
-        "reason": "Strong social buzz. Heavy news coverage. 18,174 live twitch viewers. Low streamer competition.",
-        "image": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3321460/abd7dbdeaede8b6c9a6d40bf116ff2b883f2dd45/header.jpg?t=1775206852",
+        "game": "PRAGMATA",
+        "score": 80,
+        "reason": "Strong social buzz. Heavy news coverage. 35,938 live twitch viewers. Low streamer competition.",
+        "image": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3357650/e32e168b25ed68a0cf6264c220c07e96c2abfb56/header.jpg?t=1776398844",
         "breakdown": {
           "socialBuzz": 100,
           "newsCoverage": 100,
           "updateSignal": 20,
-          "steamPresence": 15,
-          "twitchOpportunity": 95,
-          "freshness": 90
+          "steamPresence": 20,
+          "twitchOpportunity": 100,
+          "freshness": 100
         },
         "twitch": {
-          "viewers": 18174,
-          "streamers": "100+",
-          "streamerCount": 100,
-          "avgViewers": 182,
-          "ratio": 182,
-          "rank": 23
+          "viewers": 35938,
+          "streamers": "95+",
+          "streamerCount": 95,
+          "avgViewers": 378,
+          "ratio": 378,
+          "rank": 13
         }
       }
     },
