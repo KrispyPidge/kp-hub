@@ -1130,14 +1130,29 @@ footer .heart { color: var(--gold); }
     // content_pipeline: no SLA
   };
 
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => (
+      { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]
+    ));
+  }
+
   function applyState(tileEl, state, statusText) {
     const dot = tileEl.querySelector('.status-dot');
-    if (!dot) return;
-    dot.classList.remove('ok', 'amber', 'err', 'grey');
-    dot.classList.add({ green: 'ok', amber: 'amber', red: 'err', grey: 'grey' }[state] || 'grey');
-    if (statusText) {
-      const txt = tileEl.querySelector('.tile-status-text');
-      if (txt) txt.textContent = statusText;
+    if (dot) {
+      dot.classList.remove('ok', 'amber', 'err', 'grey');
+      dot.classList.add({ green: 'ok', amber: 'amber', red: 'err', grey: 'grey' }[state] || 'grey');
+    }
+    if (!statusText) return;
+    const txt = tileEl.querySelector('.tile-status-text');
+    if (!txt) return;
+    const colorVar = { green: '--ok', amber: '--amber', red: '--err', grey: '--grey' }[state] || '--text-2';
+    // Wrap the leading segment (before first " · ") in the state colour
+    const sep = ' \u00b7 ';
+    const i = statusText.indexOf(sep);
+    if (i > 0) {
+      txt.innerHTML = `<span style="color:var(${colorVar})">${escapeHtml(statusText.slice(0, i))}</span>${escapeHtml(statusText.slice(i))}`;
+    } else {
+      txt.innerHTML = `<span style="color:var(${colorVar})">${escapeHtml(statusText)}</span>`;
     }
   }
 
@@ -1257,9 +1272,67 @@ footer .heart { color: var(--gold); }
       applyState(tile, deriveState(appKey, app), app.message);
     });
     renderNextStream(status.next_stream);
+    if (status.apps?.hivemind?.top_pick) renderHivemindTopPick(status.apps.hivemind.top_pick);
+    if (status.apps?.content_pipeline?.counts) renderContentPipelineCounts(status.apps.content_pipeline.counts);
+  }
 
-    // TODO v2: renderHivemindTopPick(status.apps.hivemind.top_pick) — swap
-    //   game name, score ring value, reason text in the .hivemind section.
+  // --- Hivemind top pick swap ----------------------------------------
+  function renderHivemindTopPick(top) {
+    if (!top) return;
+    const game = top.game || '—';
+    const score = Math.max(0, Math.min(100, Number(top.score) || 0));
+
+    const artTitle = document.querySelector('.hm-art-title');
+    if (artTitle) artTitle.textContent = game;
+
+    const artBox = document.querySelector('.hm-art');
+    if (artBox && top.image) {
+      artBox.style.backgroundImage = `url("${top.image}")`;
+      artBox.style.backgroundSize = 'cover';
+      artBox.style.backgroundPosition = 'center';
+    }
+
+    const title = document.querySelector('.hm-title');
+    if (title) title.textContent = `${game} — composite score ${score}/100`;
+
+    const reason = document.querySelector('.hm-reason');
+    if (reason && top.reason) reason.textContent = top.reason;
+
+    const num = document.querySelector('.score-ring .num');
+    if (num) num.innerHTML = `${score}<span>/100</span>`;
+
+    // Score ring arc: circumference = 2π·40 ≈ 251.3
+    const ringFill = document.querySelectorAll('.score-ring svg circle')[1];
+    if (ringFill) ringFill.setAttribute('stroke-dashoffset', String(251.3 * (1 - score / 100)));
+
+    // Replace meta rows with breakdown values
+    const meta = document.querySelector('.hm-meta');
+    if (meta && top.breakdown) {
+      const labels = [
+        ['Social',    top.breakdown.socialBuzz],
+        ['News',      top.breakdown.newsCoverage],
+        ['Updates',   top.breakdown.updateSignal],
+        ['Steam',     top.breakdown.steamPresence],
+        ['Twitch op', top.breakdown.twitchOpportunity],
+      ];
+      meta.innerHTML = labels.map(([k, v]) => {
+        const val = (v == null) ? '—' : `${Math.round(v)}`;
+        const colour = (v == null) ? 'var(--text-3)' : v >= 70 ? 'var(--ok)' : v >= 30 ? 'var(--text)' : 'var(--text-3)';
+        return `<div class="row"><span class="k">${escapeHtml(k)}</span><span style="color:${colour}">${escapeHtml(val)}</span></div>`;
+      }).join('');
+    }
+  }
+
+  // --- Content Pipeline tile counts ----------------------------------
+  function renderContentPipelineCounts(counts) {
+    const tile = document.querySelector('.tile[data-app="content_pipeline"]');
+    if (!tile) return;
+    const numSpans = tile.querySelectorAll('.tile-status-row > span > span:last-child');
+    // numSpans: [ideas, sched, live] in order they appear in the DOM
+    const order = [counts.ideas, counts.scheduled, counts.live];
+    numSpans.forEach((el, i) => {
+      if (order[i] != null && /^\d+$/.test(el.textContent.trim())) el.textContent = String(order[i]);
+    });
   }
 
   loadStatus();

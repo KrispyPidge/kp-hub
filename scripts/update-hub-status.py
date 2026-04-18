@@ -58,44 +58,166 @@ def utc_iso(dt: datetime | None = None) -> str:
     return (dt or datetime.now(timezone.utc)).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+def parse_iso(s: str | None) -> datetime | None:
+    if not s:
+        return None
+    try:
+        # tolerate trailing Z and missing tz
+        if s.endswith("Z"):
+            s = s[:-1] + "+00:00"
+        dt = datetime.fromisoformat(s)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt
+    except ValueError:
+        return None
+
+
+def fmt_age(seconds: float) -> str:
+    seconds = max(0, int(seconds))
+    if seconds < 3600:
+        return f"{seconds // 60}m"
+    if seconds < 86400:
+        h, m = divmod(seconds // 60, 60)
+        return f"{h}h {m}m"
+    return f"{seconds // 86400}d"
+
+
 # ---------------------------------------------------------------------------
 # Per-app readers — STUBS. Replace bodies with real state-file reads.
 # Each reader must return a dict matching the schema in the spec, OR None
 # (which renders the tile grey via the staleness rule on the client).
 # ---------------------------------------------------------------------------
 
+STREAMCLIPPER_HISTORY = Path("C:/Users/djbla/streamclip/dashboard/batch_history.json")
+HIVEMIND_CACHE       = Path("C:/Users/djbla/OneDrive/Documents/Claude/Projects/Vibe Coding Chris Brain/content-pipeline/hivemind-cache.json")
+THUMB_OUTPUT_DIR     = Path("C:/Users/djbla/OneDrive/Documents/Claude/Projects/Vibe Coding Chris Brain/thumbnail-generator/output")
+CONTENT_LEDGER_DIR   = Path("C:/Users/djbla/OneDrive/Documents/Claude/Projects/Vibe Coding Chris Brain/content-pipeline/ledger")
+
+
 def read_streamclipper() -> dict | None:
-    # TODO: read StreamClipper's run history file
-    # e.g. runs = json.loads(STREAMCLIPPER_RUNS.read_text())
-    #      latest = runs[-1]
-    #      return {
-    #          "state": "green" if latest["status"] == "ok" else "amber",
-    #          "last_run_at": latest["finished_at"],
-    #          "message": f"{latest['clip_count']} clips from {latest['game']}",
-    #          "metric": {"label": "clips last 7d", "value": runs_in_last_7d(runs)},
-    #      }
-    return None
+    if not STREAMCLIPPER_HISTORY.exists():
+        return None
+    data = json.loads(STREAMCLIPPER_HISTORY.read_text(encoding="utf-8"))
+    runs = data.get("processed", [])
+    if not runs:
+        return None
+    latest = max(runs, key=lambda r: r.get("processed_at", ""))
+    last_run = parse_iso(latest.get("processed_at"))
+    cutoff = datetime.now(timezone.utc) - timedelta(days=7)
+    clips_7d = sum(
+        r.get("segments", 0) for r in runs
+        if (parse_iso(r.get("processed_at")) or datetime.min.replace(tzinfo=timezone.utc)) > cutoff
+    )
+    age_s = (datetime.now(timezone.utc) - last_run).total_seconds() if last_run else 0
+    return {
+        "state": "green",
+        "last_run_at": utc_iso(last_run) if last_run else None,
+        "message": f"Running · :8420 · last run {fmt_age(age_s)} ago · {clips_7d} clips/7d",
+        "metric": {"label": "clips last 7d", "value": clips_7d},
+    }
 
 
 def read_thumbnail_generator() -> dict | None:
-    # TODO: read THUMB_LAST_RUN
-    return None
+    if not THUMB_OUTPUT_DIR.exists():
+        return None
+    pngs = list(THUMB_OUTPUT_DIR.glob("*.png"))
+    if not pngs:
+        return None
+    latest = max(pngs, key=lambda p: p.stat().st_mtime)
+    mtime = datetime.fromtimestamp(latest.stat().st_mtime, tz=timezone.utc)
+    age_h = (datetime.now(timezone.utc) - mtime).total_seconds() / 3600
+    # filename pattern: thumb_<game_with_underscores>.png
+    stem = latest.stem.replace("thumb_", "", 1)
+    game = stem.replace("_", " ").title()
+    return {
+        "state": "amber",  # port clash with StreamClipper per spec
+        "last_run_at": utc_iso(mtime),
+        "message": f"Idle · :8420 taken · last: {game} thumb {fmt_age(age_h * 3600)} ago",
+        "metric": {"label": "last thumbnail", "value": game},
+    }
+
+
+def _hivemind_reason(top: dict) -> str:
+    bd = top.get("breakdown") or {}
+    twitch = top.get("twitch") or {}
+    bits: list[str] = []
+    if bd.get("socialBuzz", 0) >= 70:
+        bits.append("strong social buzz")
+    if bd.get("newsCoverage", 0) >= 70:
+        bits.append("heavy news coverage")
+    if bd.get("updateSignal", 0) >= 70:
+        bits.append("recent patch/event signal")
+    if twitch.get("viewers"):
+        bits.append(f"{twitch['viewers']:,} live Twitch viewers")
+    if bd.get("twitchOpportunity", 0) >= 70:
+        bits.append("low streamer competition")
+    return ". ".join(s.capitalize() for s in bits) + "." if bits else "High composite score across signals."
 
 
 def read_hivemind() -> dict | None:
-    # TODO: read HIVEMIND_CACHE, surface top_pick
-    return None
+    if not HIVEMIND_CACHE.exists():
+        return None
+    data = json.loads(HIVEMIND_CACHE.read_text(encoding="utf-8"))
+    last_refresh = data.get("lastRefresh")
+    opps = data.get("opportunities", [])
+    if not opps:
+        return None
+    opps_sorted = sorted(opps, key=lambda o: -(o.get("score") or 0))
+    top = opps_sorted[0]
+    hot_count = sum(1 for o in opps if (o.get("score") or 0) >= 30)
+    age_s = (datetime.now(timezone.utc) - (parse_iso(last_refresh) or datetime.now(timezone.utc))).total_seconds()
+    fresh = age_s < 6 * 3600
+    return {
+        "state": "green" if fresh else "amber",
+        "last_run_at": last_refresh,
+        "message": f"{'Fresh' if fresh else 'Stale'} · cache {fmt_age(age_s)} old · {hot_count} picks \u226530",
+        "metric": {"label": "hot picks (\u226530)", "value": hot_count},
+        "top_pick": {
+            "game": top.get("game"),
+            "score": top.get("score"),
+            "reason": _hivemind_reason(top),
+            "image": top.get("headerImage"),
+            "breakdown": top.get("breakdown") or {},
+            "twitch": top.get("twitch") or {},
+        },
+    }
 
 
 def read_stream_prep_autopilot() -> dict | None:
-    # TODO: read scheduled-task next-fire timestamp
-    # Return {"state": "green", "next_fire_at": "...", "message": "armed"}
+    # Not yet implemented as a service — leave the tile as designed.
     return None
 
 
 def read_content_pipeline() -> dict | None:
-    # TODO: read CONTENT_LEDGER, count by stage
-    return None
+    if not CONTENT_LEDGER_DIR.exists():
+        return None
+    files = list(CONTENT_LEDGER_DIR.glob("*.json"))
+    if not files:
+        return None
+    counts = {"ideas": 0, "scheduled": 0, "live": 0}
+    last_updated = ""
+    for f in files:
+        try:
+            d = json.loads(f.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        s = (d.get("status") or "").lower()
+        if s == "draft":
+            counts["ideas"] += 1
+        elif s == "scheduled":
+            counts["scheduled"] += 1
+        elif s == "live":
+            counts["live"] += 1
+        u = d.get("updatedAt") or d.get("createdAt") or ""
+        if u > last_updated:
+            last_updated = u
+    return {
+        "state": "amber",
+        "message": f"Paused · {counts['ideas']} ideas · {counts['scheduled']} scheduled · {counts['live']} live",
+        "counts": counts,
+        "last_run_at": last_updated or None,
+    }
 
 
 # ---------------------------------------------------------------------------
