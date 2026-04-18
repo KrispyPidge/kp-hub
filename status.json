@@ -1,5 +1,6 @@
 {
-  "updated_at": "2026-04-18T22:08:01Z",
+  "updated_at": "2026-04-18T22:23:03Z",
+  "supervisor_reachable": true,
   "apps": {
     "streamclipper": {
       "state": "green",
@@ -11,9 +12,9 @@
       }
     },
     "thumbnail_generator": {
-      "state": "amber",
+      "state": "green",
+      "message": "Running · :8421 · last: God Of War Ragnarok thumb 13d ago",
       "last_run_at": "2026-04-05T02:43:50Z",
-      "message": "Idle · :8420 taken · last: God Of War Ragnarok thumb 13d ago",
       "metric": {
         "label": "last thumbnail",
         "value": "God Of War Ragnarok"
@@ -21,8 +22,8 @@
     },
     "hivemind": {
       "state": "green",
-      "last_run_at": "2026-04-18T22:05:33.696Z",
-      "message": "Fresh · cache 2m old · 30 picks ≥30",
+      "last_run_at": "2026-04-18T22:18:12.591Z",
+      "message": "Fresh · cache 4m old · 30 picks ≥30",
       "metric": {
         "label": "hot picks (≥30)",
         "value": 30
@@ -30,7 +31,7 @@
       "top_pick": {
         "game": "PRAGMATA",
         "score": 80,
-        "reason": "Strong social buzz. Heavy news coverage. 35,938 live twitch viewers. Low streamer competition.",
+        "reason": "Strong social buzz. Heavy news coverage. 33,788 live twitch viewers. Low streamer competition.",
         "image": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3357650/e32e168b25ed68a0cf6264c220c07e96c2abfb56/header.jpg?t=1776398844",
         "breakdown": {
           "socialBuzz": 100,
@@ -41,12 +42,12 @@
           "freshness": 100
         },
         "twitch": {
-          "viewers": 35938,
-          "streamers": "95+",
-          "streamerCount": 95,
-          "avgViewers": 378,
-          "ratio": 378,
-          "rank": 13
+          "viewers": 33788,
+          "streamers": "97+",
+          "streamerCount": 97,
+          "avgViewers": 348,
+          "ratio": 348,
+          "rank": 14
         }
       }
     },
