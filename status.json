@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-04-18T21:36:56Z",
+  "updated_at": "2026-04-18T21:38:01Z",
   "apps": {
     "streamclipper": {
       "state": "green",
@@ -28,25 +28,25 @@
         "value": 30
       },
       "top_pick": {
-        "game": "Art",
-        "score": 95,
-        "reason": "Strong social buzz. Heavy news coverage. Recent patch/event signal. 6,535 live twitch viewers. Low streamer competition.",
-        "image": "https://static-cdn.jtvnw.net/ttv-boxart/509660-144x192.jpg",
+        "game": "Crimson Desert",
+        "score": 77,
+        "reason": "Strong social buzz. Heavy news coverage. 18,174 live twitch viewers. Low streamer competition.",
+        "image": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3321460/abd7dbdeaede8b6c9a6d40bf116ff2b883f2dd45/header.jpg?t=1775206852",
         "breakdown": {
           "socialBuzz": 100,
           "newsCoverage": 100,
-          "updateSignal": 100,
-          "steamPresence": 0,
-          "twitchOpportunity": 100,
-          "freshness": 100
+          "updateSignal": 20,
+          "steamPresence": 15,
+          "twitchOpportunity": 95,
+          "freshness": 90
         },
         "twitch": {
-          "viewers": 6535,
-          "streamers": "97+",
-          "streamerCount": 97,
-          "avgViewers": 67,
-          "ratio": 67,
-          "rank": 34
+          "viewers": 18174,
+          "streamers": "100+",
+          "streamerCount": 100,
+          "avgViewers": 182,
+          "ratio": 182,
+          "rank": 23
         }
       }
     },
