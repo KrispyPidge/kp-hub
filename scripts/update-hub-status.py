@@ -172,7 +172,7 @@ def git_push() -> None:
     def run(*cmd):
         subprocess.run(cmd, cwd=REPO_DIR, env=env, check=True)
     try:
-        run("git", "pull", "origin", "main", "--rebase")
+        run("git", "pull", "origin", "main", "--rebase", "--autostash")
         run("git", "add", "status.json")
         # nothing to commit? exit cleanly
         diff = subprocess.run(
