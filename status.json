@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-04-19T13:08:05Z",
+  "updated_at": "2026-04-19T13:23:03Z",
   "supervisor_reachable": true,
   "apps": {
     "streamclipper": {
@@ -23,7 +23,7 @@
     "hivemind": {
       "state": "amber",
       "last_run_at": "2026-04-19T07:02:35.538Z",
-      "message": "Stale · cache 6h 5m old · 30 picks ≥30",
+      "message": "Stale · cache 6h 20m old · 30 picks ≥30",
       "metric": {
         "label": "hot picks (≥30)",
         "value": 30
