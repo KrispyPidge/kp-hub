@@ -1,11 +1,11 @@
 {
-  "updated_at": "2026-04-18T23:53:03Z",
+  "updated_at": "2026-04-19T00:08:03Z",
   "supervisor_reachable": true,
   "apps": {
     "streamclipper": {
-      "state": "amber",
+      "state": "green",
       "last_run_at": "2026-04-12T02:47:47Z",
-      "message": "Idle · last run 6d ago · 0 clips/7d",
+      "message": "Running · :8420 · last run 6d ago · 0 clips/7d",
       "metric": {
         "label": "clips last 7d",
         "value": 0
@@ -23,7 +23,7 @@
     "hivemind": {
       "state": "green",
       "last_run_at": "2026-04-18T23:34:27.429Z",
-      "message": "Fresh · cache 18m old · 30 picks ≥30",
+      "message": "Fresh · cache 33m old · 30 picks ≥30",
       "metric": {
         "label": "hot picks (≥30)",
         "value": 30
