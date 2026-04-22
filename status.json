@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-04-22T14:22:31Z",
+  "updated_at": "2026-04-22T14:37:51Z",
   "supervisor_reachable": true,
   "apps": {
     "streamclipper": {
@@ -22,32 +22,32 @@
     },
     "hivemind": {
       "state": "green",
-      "last_run_at": "2026-04-22T14:07:41.530Z",
-      "message": "Fresh · cache 14m old · 30 picks ≥30",
+      "last_run_at": "2026-04-22T14:31:55.081Z",
+      "message": "Fresh · cache 5m old · 30 picks ≥30",
       "metric": {
         "label": "hot picks (≥30)",
         "value": 30
       },
       "top_pick": {
         "game": "PRAGMATA",
-        "score": 47,
-        "reason": "17,920 live twitch viewers. Low streamer competition.",
+        "score": 56,
+        "reason": "Heavy news coverage. 19,101 live twitch viewers. Low streamer competition.",
         "image": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3357650/e32e168b25ed68a0cf6264c220c07e96c2abfb56/header.jpg?t=1776398844",
         "breakdown": {
           "socialBuzz": 0,
-          "newsCoverage": 50,
-          "updateSignal": 20,
+          "newsCoverage": 75,
+          "updateSignal": 40,
           "steamPresence": 20,
-          "twitchOpportunity": 100,
-          "freshness": 30
+          "twitchOpportunity": 95,
+          "freshness": 45
         },
         "twitch": {
-          "viewers": 17920,
-          "streamers": "93+",
-          "streamerCount": 93,
-          "avgViewers": 193,
-          "ratio": 193,
-          "rank": 17
+          "viewers": 19101,
+          "streamers": "100+",
+          "streamerCount": 100,
+          "avgViewers": 191,
+          "ratio": 191,
+          "rank": 18
         }
       }
     },
@@ -66,5 +66,30 @@
     "starts_at": "2026-04-22T18:30:00Z",
     "summary": "🔴 KrispyPidgeon LIVE — Enshrouded (Casual One-Off)"
   },
-  "watchlist_top3": []
+  "watchlist_top3": [
+    {
+      "game": "PRAGMATA",
+      "score": 56,
+      "image": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3357650/e32e168b25ed68a0cf6264c220c07e96c2abfb56/header.jpg?t=1776398844",
+      "tracked": true,
+      "twitch_viewers": 19101,
+      "twitch_ratio": 191
+    },
+    {
+      "game": "ARC Raiders",
+      "score": 45,
+      "image": "https://static-cdn.jtvnw.net/ttv-boxart/464339927-144x192.jpg",
+      "tracked": true,
+      "twitch_viewers": 13010,
+      "twitch_ratio": 131
+    },
+    {
+      "game": "Windrose",
+      "score": 45,
+      "image": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3041230/7e838d87d787735d5d29d72777c5ee55653dfb2b/header.jpg?t=1776704774",
+      "tracked": true,
+      "twitch_viewers": 16300,
+      "twitch_ratio": 163
+    }
+  ]
 }
