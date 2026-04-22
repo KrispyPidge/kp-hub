@@ -324,6 +324,8 @@ main { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; paddin
 }
 .day.on { background: rgba(167,139,250,0.14); color: var(--purple); border: 1px solid rgba(167,139,250,0.3); }
 .day.day-job { background: rgba(230,184,74,0.08); color: var(--gold); border: 1px dashed rgba(230,184,74,0.25); }
+.day.today { box-shadow: 0 0 0 1px var(--gold) inset, 0 0 10px rgba(230,184,74,0.15); }
+.day.today.on { box-shadow: 0 0 0 1px var(--gold) inset, 0 0 12px rgba(230,184,74,0.22); }
 .day .t { font-size: 9px; color: inherit; opacity: 0.8; margin-top: 1px; display: block; font-family: 'JetBrains Mono', monospace; }
 
 /* Section heads */
@@ -820,15 +822,7 @@ footer .heart { color: var(--gold); }
         <div class="sc-when">—</div>
         <div class="sc-sub"></div>
 
-        <div class="sched-mini">
-          <div class="day">Mon<span class="t">off</span></div>
-          <div class="day on">Tue<span class="t">18:30</span></div>
-          <div class="day">Wed<span class="t">off</span></div>
-          <div class="day day-job">Thu<span class="t">dayjob</span></div>
-          <div class="day on">Fri<span class="t">18:30</span></div>
-          <div class="day on">Sat<span class="t">10:00</span></div>
-          <div class="day">Sun<span class="t">off</span></div>
-        </div>
+        <div class="sched-mini" id="sched-mini"></div>
       </div>
     </div>
   </section>
@@ -1322,6 +1316,37 @@ footer .heart { color: var(--gold); }
     }
   }
 
+  // --- Week strip (live from status.week_schedule) --------------------
+  function renderWeekSchedule(week) {
+    const root = document.getElementById('sched-mini');
+    if (!root) return;
+    if (!Array.isArray(week) || week.length === 0) {
+      root.innerHTML = '';
+      return;
+    }
+    const frag = document.createDocumentFragment();
+    for (const d of week) {
+      const cell = document.createElement('div');
+      const classes = ['day'];
+      if (d.has_stream) classes.push('on');
+      if (d.is_today) classes.push('today');
+      cell.className = classes.join(' ');
+      if (d.has_stream && d.summary) {
+        const extra = d.extra_count ? ` · +${d.extra_count} more` : '';
+        cell.title = `${d.summary}${extra}`;
+      }
+      const dayLabel = document.createTextNode(d.weekday || '');
+      const sub = document.createElement('span');
+      sub.className = 't';
+      sub.textContent = d.has_stream ? (d.time || 'stream') : 'off';
+      cell.appendChild(dayLabel);
+      cell.appendChild(sub);
+      frag.appendChild(cell);
+    }
+    root.innerHTML = '';
+    root.appendChild(frag);
+  }
+
   // --- Watchlist ------------------------------------------------------
   async function addTopPickToWatchlist(ev) {
     const btn = ev.currentTarget;
@@ -1728,6 +1753,7 @@ footer .heart { color: var(--gold); }
       applyState(tile, deriveState(appKey, app), app.message);
     });
     renderNextStream(status.next_stream);
+    renderWeekSchedule(status.week_schedule);
     if (status.apps?.hivemind?.top_pick) renderHivemindTopPick(status.apps.hivemind.top_pick);
     if (status.apps?.content_pipeline?.counts) renderContentPipelineCounts(status.apps.content_pipeline.counts);
     renderHeroReadout(status);

@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-04-22T14:37:51Z",
+  "updated_at": "2026-04-22T14:50:06Z",
   "supervisor_reachable": true,
   "apps": {
     "streamclipper": {
@@ -23,7 +23,7 @@
     "hivemind": {
       "state": "green",
       "last_run_at": "2026-04-22T14:31:55.081Z",
-      "message": "Fresh · cache 5m old · 30 picks ≥30",
+      "message": "Fresh · cache 18m old · 30 picks ≥30",
       "metric": {
         "label": "hot picks (≥30)",
         "value": 30
@@ -66,6 +66,58 @@
     "starts_at": "2026-04-22T18:30:00Z",
     "summary": "🔴 KrispyPidgeon LIVE — Enshrouded (Casual One-Off)"
   },
+  "week_schedule": [
+    {
+      "weekday": "Mon",
+      "date": "2026-04-20",
+      "is_today": false,
+      "has_stream": false
+    },
+    {
+      "weekday": "Tue",
+      "date": "2026-04-21",
+      "is_today": false,
+      "has_stream": true,
+      "time": "18:30",
+      "summary": "🔴 KrispyPidgeon LIVE — Marathon"
+    },
+    {
+      "weekday": "Wed",
+      "date": "2026-04-22",
+      "is_today": true,
+      "has_stream": true,
+      "time": "19:30",
+      "summary": "🔴 KrispyPidgeon LIVE — Enshrouded (Casual One-Off)"
+    },
+    {
+      "weekday": "Thu",
+      "date": "2026-04-23",
+      "is_today": false,
+      "has_stream": false
+    },
+    {
+      "weekday": "Fri",
+      "date": "2026-04-24",
+      "is_today": false,
+      "has_stream": true,
+      "time": "19:00",
+      "summary": "🔴 KrispyPidgeon LIVE — Marathon / Wildcard"
+    },
+    {
+      "weekday": "Sat",
+      "date": "2026-04-25",
+      "is_today": false,
+      "has_stream": true,
+      "time": "10:00",
+      "summary": "🔴 Saturday Sessions — KrispyPidgeon LIVE"
+    },
+    {
+      "weekday": "Sun",
+      "date": "2026-04-26",
+      "is_today": false,
+      "has_stream": false
+    }
+  ],
   "watchlist_top3": [
     {
       "game": "PRAGMATA",

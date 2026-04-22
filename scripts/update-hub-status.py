@@ -290,14 +290,15 @@ def read_content_pipeline() -> dict | None:
 # Calendar — fetch + parse the public ICS, return the soonest future event.
 # ---------------------------------------------------------------------------
 
-def fetch_next_stream() -> dict | None:
+def fetch_next_stream(cal=None) -> dict | None:
     if not ICAL_AVAILABLE:
         print("[hub] icalendar not installed — skipping next-stream lookup", file=sys.stderr)
         return None
     try:
-        req = urllib.request.Request(ICS_URL, headers={"User-Agent": "kp-hub/1.0"})
-        text = urllib.request.urlopen(req, timeout=15).read()
-        cal = Calendar.from_ical(text)
+        if cal is None:
+            req = urllib.request.Request(ICS_URL, headers={"User-Agent": "kp-hub/1.0"})
+            text = urllib.request.urlopen(req, timeout=15).read()
+            cal = Calendar.from_ical(text)
         now = datetime.now(timezone.utc)
         events = recurring_ical_events.of(cal).between(
             now, now + timedelta(days=ICS_LOOKAHEAD_DAYS)
@@ -319,6 +320,80 @@ def fetch_next_stream() -> dict | None:
     except Exception as e:
         print(f"[hub] next-stream fetch failed: {e}", file=sys.stderr)
     return None
+
+
+# ---------------------------------------------------------------------------
+# Week schedule — 7 day strip (Mon → Sun of the current local week)
+# ---------------------------------------------------------------------------
+
+def _fetch_ics() -> "Calendar | None":
+    """Shared ICS fetch. Returns a parsed Calendar or None on failure."""
+    if not ICAL_AVAILABLE:
+        return None
+    try:
+        req = urllib.request.Request(ICS_URL, headers={"User-Agent": "kp-hub/1.0"})
+        text = urllib.request.urlopen(req, timeout=15).read()
+        return Calendar.from_ical(text)
+    except Exception as e:
+        print(f"[hub] ICS fetch failed: {e}", file=sys.stderr)
+        return None
+
+
+def fetch_week_schedule(cal=None) -> list[dict] | None:
+    """Build a 7-cell Mon..Sun view of the current week's streams.
+
+    Uses the system's local timezone for week boundaries and display — the
+    ICS already encodes events in Europe/London, and the user runs this on a
+    UK-local machine, so local time is the right output domain.
+    """
+    if cal is None:
+        cal = _fetch_ics()
+    if cal is None:
+        return None
+    try:
+        # Today in local tz (aware, resolved from the OS).
+        now_local = datetime.now().astimezone()
+        monday = (now_local - timedelta(days=now_local.weekday())).replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
+        week_end = monday + timedelta(days=7)
+        events = recurring_ical_events.of(cal).between(monday, week_end)
+        # Bucket events by local date index (0..6 = Mon..Sun).
+        by_day: dict[int, list[tuple[datetime, str]]] = {i: [] for i in range(7)}
+        for ev in events:
+            dt = ev["DTSTART"].dt
+            if hasattr(dt, "astimezone"):
+                dt_local = dt.astimezone(now_local.tzinfo)
+            else:  # all-day — treat as midnight local
+                dt_local = datetime.combine(dt, datetime.min.time(), tzinfo=now_local.tzinfo)
+            idx = (dt_local.date() - monday.date()).days
+            if 0 <= idx < 7:
+                by_day[idx].append((dt_local, str(ev.get("SUMMARY", "Stream"))))
+
+        days: list[dict] = []
+        today_idx = now_local.weekday()
+        for i in range(7):
+            day_date = monday.date() + timedelta(days=i)
+            weekday_short = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][i]
+            entry: dict = {
+                "weekday": weekday_short,
+                "date": day_date.isoformat(),
+                "is_today": i == today_idx,
+                "has_stream": False,
+            }
+            buckets = sorted(by_day[i], key=lambda t: t[0])
+            if buckets:
+                first_dt, first_summary = buckets[0]
+                entry["has_stream"] = True
+                entry["time"] = first_dt.strftime("%H:%M")
+                entry["summary"] = first_summary
+                if len(buckets) > 1:
+                    entry["extra_count"] = len(buckets) - 1
+            days.append(entry)
+        return days
+    except Exception as e:
+        print(f"[hub] week-schedule build failed: {e}", file=sys.stderr)
+        return None
 
 
 # ---------------------------------------------------------------------------
@@ -406,9 +481,13 @@ def build_status() -> dict:
         "supervisor_reachable": _LIVE_STATE is not None,
         "apps": apps,
     }
-    next_stream = fetch_next_stream()
+    cal = _fetch_ics()  # fetch once, share with next_stream + week_schedule
+    next_stream = fetch_next_stream(cal)
     if next_stream:
         out["next_stream"] = next_stream
+    week = fetch_week_schedule(cal)
+    if week is not None:
+        out["week_schedule"] = week
     wl = build_watchlist_top3()
     if wl is not None:
         out["watchlist_top3"] = wl
