@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-04-22T14:05:05Z",
+  "updated_at": "2026-04-22T14:19:38Z",
   "supervisor_reachable": true,
   "apps": {
     "streamclipper": {
@@ -21,33 +21,33 @@
       }
     },
     "hivemind": {
-      "state": "amber",
-      "last_run_at": "2026-04-20T16:15:42.653Z",
-      "message": "Stale · cache 1d old · 30 picks ≥30",
+      "state": "green",
+      "last_run_at": "2026-04-22T14:07:41.530Z",
+      "message": "Fresh · cache 11m old · 30 picks ≥30",
       "metric": {
         "label": "hot picks (≥30)",
         "value": 30
       },
       "top_pick": {
         "game": "PRAGMATA",
-        "score": 84,
-        "reason": "Strong social buzz. Heavy news coverage. 21,881 live twitch viewers. Low streamer competition.",
+        "score": 47,
+        "reason": "17,920 live twitch viewers. Low streamer competition.",
         "image": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3357650/e32e168b25ed68a0cf6264c220c07e96c2abfb56/header.jpg?t=1776398844",
         "breakdown": {
-          "socialBuzz": 100,
-          "newsCoverage": 100,
-          "updateSignal": 40,
-          "steamPresence": 15,
+          "socialBuzz": 0,
+          "newsCoverage": 50,
+          "updateSignal": 20,
+          "steamPresence": 20,
           "twitchOpportunity": 100,
-          "freshness": 100
+          "freshness": 30
         },
         "twitch": {
-          "viewers": 21881,
-          "streamers": "99+",
-          "streamerCount": 99,
-          "avgViewers": 221,
-          "ratio": 221,
-          "rank": 20
+          "viewers": 17920,
+          "streamers": "93+",
+          "streamerCount": 93,
+          "avgViewers": 193,
+          "ratio": 193,
+          "rank": 17
         }
       }
     },
