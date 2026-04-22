@@ -142,18 +142,18 @@ main { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; paddin
 
 /* Watchlist row */
 .wl-row {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 12px; margin-bottom: 26px;
 }
 .wl-card {
-  display: grid; grid-template-columns: 72px 1fr auto; gap: 12px;
+  display: grid; grid-template-columns: 140px 1fr auto; gap: 12px;
   align-items: center; padding: 10px 14px 10px 10px;
   background: var(--bg-1); border: 1px solid var(--line-2);
   border-radius: 10px; transition: border-color .15s, transform .15s;
 }
 .wl-card:hover { border-color: var(--line-3); transform: translateY(-1px); }
 .wl-art {
-  width: 72px; aspect-ratio: 460/215; border-radius: 6px;
+  width: 140px; aspect-ratio: 460/215; border-radius: 6px;
   background: linear-gradient(135deg, #1a1a24, #0e0e14); background-size: cover; background-position: center;
 }
 .wl-body { min-width: 0; }
@@ -817,8 +817,8 @@ footer .heart { color: var(--gold); }
           <span class="colon">:</span>
           <span class="big">08</span><span class="unit">s</span>
         </div>
-        <div class="sc-when">Tue · 18:30 BST</div>
-        <div class="sc-sub">Valorant · Ranked · "grinding out of bronze, again"</div>
+        <div class="sc-when">—</div>
+        <div class="sc-sub"></div>
 
         <div class="sched-mini">
           <div class="day">Mon<span class="t">off</span></div>
@@ -1286,6 +1286,25 @@ footer .heart { color: var(--gold); }
     window.__streamTarget = target;
     window.__nextStream = ns; // used by copyStreamPrep()
     updateCountdown(); // refresh immediately, don't wait for tick
+
+    // Populate the schedule-card's "when" and subtitle from live data.
+    const when = document.querySelector('.schedule-card .sc-when');
+    if (when) {
+      const day = target.toLocaleDateString('en-GB', { weekday: 'short' });
+      const time = target.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+      // Extract timezone abbreviation (BST/GMT) via a separate format call.
+      const tzPart = target.toLocaleTimeString('en-GB', { timeZoneName: 'short' }).split(' ').pop() || '';
+      when.textContent = `${day} · ${time}${tzPart ? ' ' + tzPart : ''}`;
+    }
+    const sub = document.querySelector('.schedule-card .sc-sub');
+    if (sub) {
+      // Summary looks like "🔴 KrispyPidgeon LIVE — Enshrouded (Casual One-Off)".
+      // Show only what's after the em dash; fall back to the full summary.
+      const raw = String(ns.summary || '').trim();
+      const dash = raw.indexOf('—');
+      const tail = dash >= 0 ? raw.slice(dash + 1).trim() : raw;
+      sub.textContent = tail || '';
+    }
 
     // Reflect the next stream on the Stream Prep tile.
     const statusEl = document.getElementById('stream-prep-status');
