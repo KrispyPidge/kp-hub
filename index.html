@@ -459,6 +459,9 @@ main { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; paddin
 .tile-flag.warn { background: rgba(245,158,11,0.1); color: var(--amber); border: 1px solid rgba(245,158,11,0.28); }
 .tile-flag.wip  { background: rgba(154,154,168,0.08); color: var(--text-2); border: 1px dashed var(--line-3); }
 
+.card.not-wired { border-style: dashed; opacity: 0.75; }
+.card.not-wired .clip-channel { cursor: default; pointer-events: none; opacity: 0.85; }
+
 /* port clash strip */
 .port-clash {
   margin-top: 10px;
@@ -750,6 +753,7 @@ footer .heart { color: var(--gold); }
       <span class="mono" style="color:var(--ok)">●</span> <span>services 6/7 up</span>
       <span class="tb-dot"></span>
       <span id="supervisor-status" title="Local launcher (kp-supervisor :8090)"><span id="supervisor-dot" class="status-dot grey" style="display:inline-block;vertical-align:middle;margin-right:6px"></span><span class="mono" style="color:var(--text-3)">launcher</span></span>
+      <button class="tb-btn" id="heartbeat-btn" onclick="runHeartbeat(event)" title="Regenerate status.json locally and push it to GitHub Pages (needs launcher online)" disabled><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> <span class="hb-label">Heartbeat</span></button>
       <button class="tb-btn" id="refresh-btn" onclick="refreshAll(event)" title="Re-fetch status, podcast feed and supervisor health"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a9 9 0 0 1-9 9 9 9 0 0 1-8.05-5M3 12a9 9 0 0 1 9-9 9 9 0 0 1 8.05 5"/><path d="M21 3v5h-5M3 21v-5h5"/></svg> Refresh</button>
       <div class="dropdown-wrap" id="go-live-wrap">
         <button class="tb-btn primary" onclick="toggleGoLiveDropdown(event)" title="Prep copy for a scheduled or impromptu stream">Go live checklist ▾</button>
@@ -777,7 +781,7 @@ footer .heart { color: var(--gold); }
     <div class="hero-left">
       <span class="hero-eyebrow"><span class="live-dot"></span> Offline · next stream in 15h 46m</span>
       <h1 class="display hero-title">Good evening, <span class="accent-gold">Master Black.</span><br/>Stack is <span class="accent-purple">warm</span>.</h1>
-      <p class="hero-sub">Seven production tools. One pigeon. All tiles green except two — and both of those are known. Hivemind pulled a fresh pick at 18:02. Thumbnails pre-queued for Tuesday's Valorant session.</p>
+      <p class="hero-sub">Seven production tools. One pigeon. Tile health is live below — anything dashed or flagged is still a work in progress.</p>
 
       <div class="hero-readout">
         <div class="readout-cell" id="readout-next-stream">
@@ -990,33 +994,42 @@ footer .heart { color: var(--gold); }
   <!-- Hivemind top pick -->
   <div class="sec-head">
     <h2>Hivemind · top pick right now</h2>
-    <div class="right">refreshed 18:02 · next in 1h 58m</div>
+    <div class="right" style="display:flex;align-items:center;gap:10px;font-size:12px;color:var(--text-3)">
+      <span id="hivemind-refresh-line">waiting for cache…</span>
+      <span style="display:inline-flex;gap:4px;align-items:center">
+        <button class="tb-btn" id="hm-prev" onclick="stepHivemindPick(-1)" title="Previous pick" style="padding:4px 9px;font-size:12px">‹</button>
+        <span id="hm-index" style="font-family:'JetBrains Mono',monospace;min-width:44px;text-align:center">— / —</span>
+        <button class="tb-btn" id="hm-next" onclick="stepHivemindPick(1)" title="Next pick" style="padding:4px 9px;font-size:12px">›</button>
+      </span>
+      <button class="tb-btn" onclick="loadHivemindLive()" title="Refresh from supervisor" style="padding:4px 9px;font-size:12px">↻</button>
+    </div>
   </div>
 
-  <section class="hivemind">
+  <section class="hivemind" id="hivemind-section">
     <div class="hm-art">
       <div class="hm-art-label">Game art</div>
-      <div class="hm-art-title">Schedule 1</div>
+      <div class="hm-art-title">—</div>
     </div>
     <div class="hm-body">
-      <div class="hm-badge"><span class="radar"></span> #1 · Steam + Reddit trending</div>
-      <div class="hm-title">Drug-dealing sim "Schedule 1" spiking hard on r/Games</div>
-      <div class="hm-reason">4 of the last 5 thread titles mention it. Steam CCU up 38% WoW, Twitch viewership ×2.1 overnight. Zero KrispyPidgeon coverage yet — window is open for ~72h before the streamer wave.</div>
+      <div class="hm-badge"><span class="radar"></span> Waiting for Hivemind cache</div>
+      <div class="hm-title">No top pick yet</div>
+      <div class="hm-reason">The hub will pull the current #1 as soon as the Hivemind refresh runs. If this stays empty, start the local launcher and open the Hivemind viewer to trigger a refresh.</div>
     </div>
     <div class="hm-score-col">
       <div class="score-ring">
         <svg width="96" height="96" viewBox="0 0 96 96">
           <circle cx="48" cy="48" r="40" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="6"/>
           <circle cx="48" cy="48" r="40" fill="none" stroke="var(--teal)" stroke-width="6"
-                  stroke-dasharray="251.3" stroke-dashoffset="40" stroke-linecap="round"/>
+                  stroke-dasharray="251.3" stroke-dashoffset="251.3" stroke-linecap="round"/>
         </svg>
-        <div class="num">84<span>/100</span></div>
+        <div class="num">—<span>/100</span></div>
       </div>
       <div class="hm-meta">
-        <div class="row"><span class="k">Reddit</span><span>9.1</span></div>
-        <div class="row"><span class="k">Steam Δ</span><span>+38%</span></div>
-        <div class="row"><span class="k">Twitch</span><span>2.1×</span></div>
-        <div class="row"><span class="k">Competition</span><span style="color:var(--ok)">low</span></div>
+        <div class="row"><span class="k">Social</span><span>—</span></div>
+        <div class="row"><span class="k">News</span><span>—</span></div>
+        <div class="row"><span class="k">Updates</span><span>—</span></div>
+        <div class="row"><span class="k">Steam</span><span>—</span></div>
+        <div class="row"><span class="k">Twitch op</span><span>—</span></div>
       </div>
       <button class="hm-cta" onclick="addTopPickToWatchlist(event)">Add to watchlist →</button>
     </div>
@@ -1025,10 +1038,18 @@ footer .heart { color: var(--gold); }
   <!-- Watchlist -->
   <div class="sec-head">
     <h2>Watchlist · games you're eyeing</h2>
-    <div class="right"><a href="http://localhost:8090/viewers/watchlist" target="_blank" rel="noopener" style="color:var(--text-2);text-decoration:none">Open full list →</a></div>
+    <div class="right" style="display:flex;align-items:center;gap:8px">
+      <form id="watchlist-add-form" onsubmit="return addWatchlistManual(event)" style="display:flex;gap:6px;align-items:center">
+        <input id="watchlist-add-input" type="text" placeholder="Add game by name…" autocomplete="off"
+               style="background:var(--bg-1);border:1px solid var(--line-2);border-radius:7px;padding:6px 9px;font:inherit;font-size:12px;color:var(--text);min-width:200px" />
+        <button type="submit" class="tb-btn" style="font-size:12px">Add</button>
+      </form>
+      <a href="http://localhost:8090/viewers/watchlist" target="_blank" rel="noopener" style="color:var(--text-2);text-decoration:none;font-size:12px">Open full list →</a>
+    </div>
   </div>
+  <div id="watchlist-feedback" style="font-size:11px;color:var(--text-3);margin:-16px 0 10px;min-height:14px;font-family:'JetBrains Mono',monospace"></div>
   <section class="wl-row" id="watchlist-row">
-    <div class="wl-empty">Nothing on the watchlist yet. Hit "Add to watchlist" on the Hivemind top pick, or add games manually at <span class="mono">localhost:8090/viewers/watchlist</span>.</div>
+    <div class="wl-empty">Loading watchlist…</div>
   </section>
 
   <!-- Bottom grid -->
@@ -1071,12 +1092,14 @@ footer .heart { color: var(--gold); }
     </div>
 
     <!-- Clip strip -->
-    <div class="card">
+    <div class="card not-wired">
+      <span class="tile-flag wip" style="position:absolute;top:10px;right:10px">not wired up</span>
       <div class="card-head">
         <svg class="i" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="1.6"><path d="M15 5a3 3 0 1 0-6 0v14a3 3 0 1 0 6 0z"/><path d="M9 12h6"/></svg>
         <div class="card-title">Clip distribution</div>
-        <div class="card-label">where the shorts go</div>
+        <div class="card-label" style="margin-right:90px">demo · static</div>
       </div>
+      <div style="font-size:10.5px;color:var(--text-3);margin:2px 0 8px;font-family:'JetBrains Mono',monospace">Numbers below are mock data — no publisher hooked in yet.</div>
       <div class="clip-strip">
         <a class="clip-channel" href="#">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="#fff"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>
@@ -1365,6 +1388,25 @@ footer .heart { color: var(--gold); }
   window.copyRssUrl = copyRssUrl;
 
   // --- Topbar actions -------------------------------------------------
+  function _setRefreshFeedback(msg, kind) {
+    // kind: 'ok' | 'err' | null. Reuses the topbar refresh button title for
+    // hover detail and inserts a small status pill next to it.
+    const btn = document.getElementById('refresh-btn');
+    if (!btn) return;
+    let pill = document.getElementById('refresh-feedback');
+    if (!pill) {
+      pill = document.createElement('span');
+      pill.id = 'refresh-feedback';
+      pill.style.cssText = 'margin-left:8px;font-size:11px;font-family:JetBrains Mono,ui-monospace,monospace;opacity:.85';
+      btn.insertAdjacentElement('afterend', pill);
+    }
+    pill.textContent = msg || '';
+    pill.style.color = kind === 'err' ? 'var(--amber, #e6b84a)'
+                     : kind === 'ok'  ? 'var(--ok, #34d399)'
+                     : 'var(--text-3, #666)';
+    if (kind === 'ok') setTimeout(() => { if (pill.textContent === msg) pill.textContent = ''; }, 4000);
+  }
+
   async function refreshAll(ev) {
     const btn = ev.currentTarget;
     const icon = btn.querySelector('svg');
@@ -1374,12 +1416,23 @@ footer .heart { color: var(--gold); }
       setTimeout(() => { icon.style.transition = ''; icon.style.transform = ''; }, 650);
     }
     btn.disabled = true;
+    _setRefreshFeedback('refreshing…', null);
     try {
-      await Promise.allSettled([
+      const t0 = performance.now();
+      const results = await Promise.allSettled([
         loadStatus(),
         loadPodcast(),
         pingSupervisor(),
+        (typeof loadHivemindLive === 'function') ? loadHivemindLive() : Promise.resolve(),
+        (typeof loadWatchlist === 'function') ? loadWatchlist() : Promise.resolve(),
       ]);
+      const failed = results.filter(r => r.status === 'rejected').length;
+      const ms = Math.round(performance.now() - t0);
+      if (failed === 0 && !window.__lastStatusErr) {
+        _setRefreshFeedback(`✓ refreshed · ${ms}ms`, 'ok');
+      } else {
+        _setRefreshFeedback(`⚠ ${failed || 1} failed · check console`, 'err');
+      }
     } finally {
       setTimeout(() => { btn.disabled = false; }, 600);
     }
@@ -1502,7 +1555,7 @@ footer .heart { color: var(--gold); }
     }
     try {
       await navigator.clipboard.writeText(cmd);
-      btn.innerHTML = '✓ Copied — paste in Claude Code';
+      btn.innerHTML = '✓ Copied — paste in Cowork/Claude Code';
     } catch {
       btn.innerHTML = '⚠ clipboard blocked';
     } finally {
@@ -1637,10 +1690,17 @@ footer .heart { color: var(--gold); }
   async function loadStatus() {
     let status = null;
     try {
-      status = await fetch('status.json', { cache: 'no-store' }).then(r => r.json());
+      // Cache-bust to defeat GH Pages CDN + browser cache on deploys.
+      const r = await fetch(`status.json?_=${Date.now()}`, { cache: 'no-store' });
+      if (!r.ok) throw new Error(`status.json HTTP ${r.status}`);
+      status = await r.json();
+      window.__lastStatusOk = new Date();
     } catch (e) {
+      console.error('[hub] loadStatus failed:', e);
+      window.__lastStatusErr = String(e);
       // graceful: leave all heartbeat tiles grey, keep static countdown
       document.querySelectorAll('.tile[data-app]').forEach(t => applyState(t, 'grey'));
+      _setRefreshFeedback(`status.json failed: ${e}`, 'err');
       return;
     }
     Object.entries(status.apps || {}).forEach(([appKey, app]) => {
@@ -1655,11 +1715,15 @@ footer .heart { color: var(--gold); }
     renderWatchlistRow(status.watchlist_top3);
   }
 
-  function renderWatchlistRow(items) {
+  function renderWatchlistRow(items, opts) {
     const row = document.getElementById('watchlist-row');
     if (!row) return;
+    const { supervisorOnline = true } = opts || {};
     if (!Array.isArray(items) || items.length === 0) {
-      row.innerHTML = `<div class="wl-empty">Nothing on the watchlist yet. Hit "Add to watchlist" on the Hivemind top pick, or add games manually at <span class="mono">localhost:8090/viewers/watchlist</span>.</div>`;
+      const hint = supervisorOnline
+        ? `Nothing on the watchlist yet. Hit "Add to watchlist" on the Hivemind top pick, or type a game name in the box above.`
+        : `Local launcher offline — can't load or edit the watchlist. Start kp-supervisor to enable adding games.`;
+      row.innerHTML = `<div class="wl-empty">${hint}</div>`;
       return;
     }
     const scoreColor = (s) => {
@@ -1671,6 +1735,7 @@ footer .heart { color: var(--gold); }
     };
     row.innerHTML = items.map(it => {
       const game = String(it.game || '').replace(/[<>]/g, '');
+      const gameAttr = escapeHtml(game);
       const art = it.image ? `background-image:url("${String(it.image).replace(/"/g, '\\"')}")` : '';
       const meta = it.tracked
         ? `Hivemind · ${(it.twitch_viewers != null) ? it.twitch_viewers + ' viewers' : 'tracked'}`
@@ -1679,44 +1744,95 @@ footer .heart { color: var(--gold); }
         ? `<div class="wl-score" style="background:${scoreColor(it.score)}">${Math.round(Number(it.score) || 0)}</div>`
         : `<div class="wl-score untracked">UNTRACKED</div>`;
       return `
-        <div class="wl-card">
+        <div class="wl-card" style="position:relative">
+          <button class="wl-remove" title="Remove from watchlist" onclick="removeFromWatchlist('${gameAttr}', event)"
+                  style="position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;background:transparent;color:var(--text-3);border:1px solid var(--line-2);cursor:pointer;font-size:12px;line-height:1;padding:0;display:grid;place-items:center">×</button>
           <div class="wl-art" style="${art}"></div>
           <div class="wl-body">
-            <div class="wl-name">${game}</div>
-            <div class="wl-meta">${meta}</div>
+            <div class="wl-name">${gameAttr}</div>
+            <div class="wl-meta">${escapeHtml(meta)}</div>
           </div>
           ${score}
         </div>`;
     }).join('');
   }
 
+  function _setWatchlistFeedback(msg, kind) {
+    const el = document.getElementById('watchlist-feedback');
+    if (!el) return;
+    const color = kind === 'err' ? 'var(--err)' : kind === 'ok' ? 'var(--ok)' : 'var(--text-3)';
+    el.style.color = color;
+    el.textContent = msg || '';
+    if (msg) setTimeout(() => { if (el.textContent === msg) el.textContent = ''; }, 3500);
+  }
+
   async function loadWatchlist() {
     // Ask the supervisor directly for live watchlist state so the hub
-    // updates immediately after Add/Remove without waiting 15 min for the
+    // updates immediately after Add/Remove without waiting for the
     // aggregator to rewrite status.json.
     try {
       const res = await fetch(`${SUPERVISOR_BASE}/watchlist`, { cache: 'no-store' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      const top3 = (data.items || [])
-        .map(it => {
-          const tw = it.liveTwitch || {};
-          return {
-            game: it.game,
-            score: it.liveScore,
-            image: it.headerImage,
-            tracked: !!it.inHivemind,
-            twitch_viewers: tw.viewers ?? null,
-            twitch_ratio: tw.ratio ?? null,
-          };
-        })
-        .slice(0, 3);
-      renderWatchlistRow(top3);
+      const items = (data.items || []).map(it => {
+        const tw = it.liveTwitch || {};
+        return {
+          game: it.game,
+          score: it.liveScore,
+          image: it.headerImage,
+          tracked: !!it.inHivemind,
+          twitch_viewers: tw.viewers ?? null,
+          twitch_ratio: tw.ratio ?? null,
+        };
+      });
+      renderWatchlistRow(items, { supervisorOnline: true });
     } catch {
-      // supervisor offline → fall back to whatever's in status.json
+      // supervisor offline → leave empty-state message
+      renderWatchlistRow([], { supervisorOnline: false });
     }
   }
   window.loadWatchlist = loadWatchlist;
+
+  async function addWatchlistManual(ev) {
+    ev.preventDefault();
+    const input = document.getElementById('watchlist-add-input');
+    if (!input) return false;
+    const game = (input.value || '').trim();
+    if (!game) return false;
+    _setWatchlistFeedback('Adding…', null);
+    try {
+      const res = await fetch(`${SUPERVISOR_BASE}/watchlist`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ game }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      _setWatchlistFeedback(data.added ? `✓ Added "${game}"` : `already watching "${game}"`, 'ok');
+      input.value = '';
+      loadWatchlist();
+    } catch (e) {
+      _setWatchlistFeedback(`⚠ launcher offline — can't add "${game}"`, 'err');
+    }
+    return false;
+  }
+  window.addWatchlistManual = addWatchlistManual;
+
+  async function removeFromWatchlist(game, ev) {
+    if (ev) ev.stopPropagation();
+    if (!game) return;
+    if (!confirm(`Remove "${game}" from the watchlist?`)) return;
+    _setWatchlistFeedback(`Removing "${game}"…`, null);
+    try {
+      const res = await fetch(`${SUPERVISOR_BASE}/watchlist/${encodeURIComponent(game)}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      _setWatchlistFeedback(`✓ Removed "${game}"`, 'ok');
+      loadWatchlist();
+    } catch (e) {
+      _setWatchlistFeedback(`⚠ launcher offline — can't remove "${game}"`, 'err');
+    }
+  }
+  window.removeFromWatchlist = removeFromWatchlist;
 
   // --- Hero readout cells -------------------------------------------
   function fmtAgo(isoOrDate) {
@@ -1758,6 +1874,9 @@ footer .heart { color: var(--gold); }
       const up = !!status.supervisor_reachable;
       supCell.querySelector('.v').textContent = up ? 'up' : 'offline';
       supCell.querySelector('.v').style.color = up ? 'var(--ok)' : 'var(--text-3)';
+      supCell.title = up
+        ? 'kp-supervisor reachable on :8090'
+        : 'Launcher offline — start kp-supervisor (run kp-supervisor/install-startup.cmd)';
     }
     // Hivemind cache age
     const hmCell = document.querySelector('#readout-hivemind .v');
@@ -1798,10 +1917,38 @@ footer .heart { color: var(--gold); }
     }
 
     const title = document.querySelector('.hm-title');
-    if (title) title.textContent = `${game} — composite score ${score}/100`;
+    if (title) title.textContent = game;
 
+    const badge = document.querySelector('.hm-badge');
+    if (badge) {
+      const tag = top.steamType ? top.steamType.replace(/_/g, ' ') : (top.appId ? 'steam pick' : 'twitch trending');
+      badge.innerHTML = `<span class="radar"></span> ${escapeHtml(tag)} · score ${score}/100`;
+    }
+
+    // Reason line + top reddit post link underneath
     const reason = document.querySelector('.hm-reason');
-    if (reason && top.reason) reason.textContent = top.reason;
+    if (reason) {
+      const parts = [];
+      if (top.reason) parts.push(escapeHtml(top.reason));
+      if (top.topPost && top.topPost.url) {
+        const tp = top.topPost;
+        const sub = tp.subreddit ? `r/${escapeHtml(tp.subreddit)}` : 'reddit';
+        const up = tp.upvotes != null ? `${tp.upvotes.toLocaleString()}↑` : '';
+        const cm = tp.comments != null ? `${tp.comments.toLocaleString()}💬` : '';
+        const stats = [sub, up, cm].filter(Boolean).join(' · ');
+        parts.push(
+          `<div style="margin-top:8px;font-size:12px"><a href="${escapeHtml(tp.url)}" target="_blank" rel="noopener" style="color:var(--teal);text-decoration:none">↗ ${escapeHtml(tp.title || 'top reddit thread')}</a><div style="color:var(--text-3);font-family:'JetBrains Mono',monospace;font-size:10.5px;margin-top:2px">${stats}</div></div>`
+        );
+      }
+      if (top.topNews && top.topNews.url) {
+        const tn = top.topNews;
+        const outlet = tn.outlet ? escapeHtml(tn.outlet) : 'news';
+        parts.push(
+          `<div style="margin-top:6px;font-size:11.5px"><a href="${escapeHtml(tn.url)}" target="_blank" rel="noopener" style="color:var(--text-2);text-decoration:none">${outlet} → ${escapeHtml(tn.title || 'latest article')}</a></div>`
+        );
+      }
+      reason.innerHTML = parts.join('');
+    }
 
     const num = document.querySelector('.score-ring .num');
     if (num) num.innerHTML = `${score}<span>/100</span>`;
@@ -1810,21 +1957,29 @@ footer .heart { color: var(--gold); }
     const ringFill = document.querySelectorAll('.score-ring svg circle')[1];
     if (ringFill) ringFill.setAttribute('stroke-dashoffset', String(251.3 * (1 - score / 100)));
 
-    // Replace meta rows with breakdown values
+    // Replace meta rows with real signals, not normalized bars
     const meta = document.querySelector('.hm-meta');
-    if (meta && top.breakdown) {
-      const labels = [
-        ['Social',    top.breakdown.socialBuzz],
-        ['News',      top.breakdown.newsCoverage],
-        ['Updates',   top.breakdown.updateSignal],
-        ['Steam',     top.breakdown.steamPresence],
-        ['Twitch op', top.breakdown.twitchOpportunity],
+    if (meta) {
+      const tw = top.twitch || {};
+      const fmt = (n) => (n == null) ? '—' : (typeof n === 'number' ? n.toLocaleString() : String(n));
+      const rows = [
+        ['Live viewers', fmt(tw.viewers)],
+        ['Streamers',    tw.streamerCount != null ? `${tw.streamerCount}${tw.rank ? ` · #${tw.rank}` : ''}` : '—'],
+        ['Avg / stream', fmt(tw.avgViewers)],
+        ['Reddit posts', fmt(top.mentionCount)],
+        ['News articles', fmt(top.newsCount)],
       ];
-      meta.innerHTML = labels.map(([k, v]) => {
-        const val = (v == null) ? '—' : `${Math.round(v)}`;
-        const colour = (v == null) ? 'var(--text-3)' : v >= 70 ? 'var(--ok)' : v >= 30 ? 'var(--text)' : 'var(--text-3)';
-        return `<div class="row"><span class="k">${escapeHtml(k)}</span><span style="color:${colour}">${escapeHtml(val)}</span></div>`;
-      }).join('');
+      // Verdict: high avgViewers = good competition vs. solo. Low streamers = crowded.
+      const avg = Number(tw.avgViewers) || 0;
+      let verdict = null;
+      if (avg >= 500) verdict = ['crowded · tough to stand out', 'var(--amber)'];
+      else if (avg >= 100) verdict = ['healthy · audience is warm', 'var(--ok)'];
+      else if (avg > 0) verdict = ['quiet · easy to get seen', 'var(--teal)'];
+      meta.innerHTML =
+        (verdict ? `<div class="row" style="margin-bottom:4px"><span class="k">Verdict</span><span style="color:${verdict[1]};font-weight:600">${escapeHtml(verdict[0])}</span></div>` : '') +
+        rows.map(([k, v]) =>
+          `<div class="row"><span class="k">${escapeHtml(k)}</span><span>${escapeHtml(v)}</span></div>`
+        ).join('');
     }
   }
 
@@ -1843,6 +1998,65 @@ footer .heart { color: var(--gold); }
   loadStatus();
   setInterval(loadStatus, 120_000); // 2 min refresh per spec §4
 
+  // Live Hivemind fetch from supervisor — bypasses the (currently disabled)
+  // status.json heartbeat so the top pick stays current whenever the local
+  // launcher is running.
+  window.__hivemindPicks = [];
+  window.__hivemindIndex = 0;
+
+  function updateHivemindPager() {
+    const idxEl = document.getElementById('hm-index');
+    const prev = document.getElementById('hm-prev');
+    const next = document.getElementById('hm-next');
+    const n = window.__hivemindPicks.length;
+    const i = window.__hivemindIndex;
+    if (idxEl) idxEl.textContent = n ? `${i + 1} / ${n}` : '— / —';
+    if (prev) prev.disabled = !n || i <= 0;
+    if (next) next.disabled = !n || i >= n - 1;
+  }
+
+  function stepHivemindPick(delta) {
+    const n = window.__hivemindPicks.length;
+    if (!n) return;
+    const next = Math.max(0, Math.min(n - 1, window.__hivemindIndex + delta));
+    if (next === window.__hivemindIndex) return;
+    window.__hivemindIndex = next;
+    renderHivemindTopPick(window.__hivemindPicks[next]);
+    updateHivemindPager();
+  }
+  window.stepHivemindPick = stepHivemindPick;
+
+  async function loadHivemindLive() {
+    try {
+      const res = await fetch(`${SUPERVISOR_BASE}/hivemind`, { cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const picks = Array.isArray(data?.picks) ? data.picks : (data?.top_pick ? [data.top_pick] : []);
+      // Preserve the currently-viewed game across refreshes if it's still in the list.
+      const current = window.__hivemindPicks[window.__hivemindIndex]?.game;
+      window.__hivemindPicks = picks;
+      const keepIdx = current ? picks.findIndex(p => p.game === current) : -1;
+      window.__hivemindIndex = keepIdx >= 0 ? keepIdx : 0;
+      if (picks.length) renderHivemindTopPick(picks[window.__hivemindIndex]);
+      updateHivemindPager();
+      const line = document.getElementById('hivemind-refresh-line');
+      if (line) {
+        if (data && data.lastRefresh) {
+          const ago = fmtAgo(data.lastRefresh);
+          line.textContent = ago ? `cache ${ago} old · ${data.hot_count || 0} picks ≥30` : `—`;
+        } else if (data && data.reason) {
+          line.textContent = data.reason === 'cache_missing' ? 'cache not built yet' : data.reason;
+        }
+      }
+    } catch {
+      // supervisor offline — leave whatever status.json provided
+      const line = document.getElementById('hivemind-refresh-line');
+      if (line && !window.__hivemindTopPick) line.textContent = 'launcher offline · showing cached';
+      updateHivemindPager();
+    }
+  }
+  window.loadHivemindLive = loadHivemindLive;
+
   // --- kp-supervisor (local launcher) ---------------------------------
   // Separate local service at http://localhost:8090 that spawns child
   // apps. Hub stays static; only the user's PC can launch things.
@@ -1854,21 +2068,77 @@ footer .heart { color: var(--gold); }
     content_pipeline: 'http://localhost:8090/viewers/pipeline',
   };
 
+  function supervisorOnline() {
+    const dot = document.getElementById('supervisor-dot');
+    return !!dot && dot.classList.contains('ok');
+  }
+
   async function pingSupervisor() {
     const dot = document.getElementById('supervisor-dot');
+    const hbBtn = document.getElementById('heartbeat-btn');
     if (!dot) return;
+    let reachable = false;
     try {
       const res = await fetch(`${SUPERVISOR_BASE}/healthz`, { cache: 'no-store' });
       if (!res.ok) throw new Error('bad status');
+      reachable = true;
       dot.className = 'status-dot ok';
       dot.title = 'Local launcher reachable';
     } catch {
       dot.className = 'status-dot grey';
       dot.title = 'Local launcher offline — launch buttons will try fallback URLs';
     }
+    if (hbBtn && !hbBtn.dataset.busy) {
+      hbBtn.disabled = !reachable;
+      hbBtn.title = reachable
+        ? 'Regenerate status.json locally and push it to GitHub Pages'
+        : 'Launcher offline — start kp-supervisor (run kp-supervisor/install-startup.cmd)';
+    }
   }
   pingSupervisor();
   setInterval(pingSupervisor, 30_000);
+
+  async function runHeartbeat(ev) {
+    if (ev && ev.preventDefault) ev.preventDefault();
+    const btn = document.getElementById('heartbeat-btn');
+    if (!btn || btn.disabled) return;
+    const original = btn.innerHTML;
+    btn.dataset.busy = '1';
+    btn.disabled = true;
+    btn.innerHTML = '<span class="mono" style="font-size:12px">· running…</span>';
+    let ok = false;
+    try {
+      const res = await fetch(`${SUPERVISOR_BASE}/heartbeat`, { method: 'POST' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        console.error('[hub] heartbeat failed', data);
+        btn.innerHTML = '<span class="mono" style="color:#ff7a6b;font-size:12px">· failed</span>';
+        const detail = typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail || data);
+        alert(`Heartbeat failed (${res.status}):\n${detail}`);
+      } else {
+        ok = true;
+        console.log('[hub] heartbeat ok', data);
+        btn.innerHTML = '<span class="mono" style="color:var(--ok);font-size:12px">· pushed</span>';
+        // Wait a few seconds for GitHub Pages to republish, then re-fetch status.json.
+        setTimeout(() => { try { refreshAll(); } catch {} }, 4000);
+      }
+    } catch (e) {
+      console.error('[hub] heartbeat error', e);
+      btn.innerHTML = '<span class="mono" style="color:#ff7a6b;font-size:12px">· offline</span>';
+    } finally {
+      setTimeout(() => {
+        btn.innerHTML = original;
+        delete btn.dataset.busy;
+        btn.disabled = !supervisorOnline();
+      }, ok ? 6000 : 4000);
+    }
+  }
+
+  // Live Hivemind + watchlist: kick off after SUPERVISOR_BASE is in scope.
+  loadHivemindLive();
+  setInterval(loadHivemindLive, 60_000);
+  loadWatchlist();
+  setInterval(loadWatchlist, 60_000);
 
   async function launchApp(ev, key) {
     const btn = ev.currentTarget;
