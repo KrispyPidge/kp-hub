@@ -1,11 +1,11 @@
 {
-  "updated_at": "2026-04-19T15:38:03Z",
+  "updated_at": "2026-04-22T14:05:05Z",
   "supervisor_reachable": true,
   "apps": {
     "streamclipper": {
       "state": "green",
       "last_run_at": "2026-04-12T02:47:47Z",
-      "message": "Running · :8420 · last run 7d ago · 0 clips/7d",
+      "message": "Running · :8420 · last run 10d ago · 0 clips/7d",
       "metric": {
         "label": "clips last 7d",
         "value": 0
@@ -13,7 +13,7 @@
     },
     "thumbnail_generator": {
       "state": "green",
-      "message": "Running · :8421 · last: God Of War Ragnarok thumb 14d ago",
+      "message": "Running · :8421 · last: God Of War Ragnarok thumb 17d ago",
       "last_run_at": "2026-04-05T02:43:50Z",
       "metric": {
         "label": "last thumbnail",
@@ -22,57 +22,49 @@
     },
     "hivemind": {
       "state": "amber",
-      "last_run_at": "2026-04-19T07:02:35.538Z",
-      "message": "Stale · cache 8h 35m old · 30 picks ≥30",
+      "last_run_at": "2026-04-20T16:15:42.653Z",
+      "message": "Stale · cache 1d old · 30 picks ≥30",
       "metric": {
         "label": "hot picks (≥30)",
         "value": 30
       },
       "top_pick": {
-        "game": "Slay the Spire 2",
+        "game": "PRAGMATA",
         "score": 84,
-        "reason": "Strong social buzz. Heavy news coverage. Recent patch/event signal.",
-        "image": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2868840/b0958d387dc366211e0f353443710cfcf9fdb020/header.jpg?t=1773851542",
+        "reason": "Strong social buzz. Heavy news coverage. 21,881 live twitch viewers. Low streamer competition.",
+        "image": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3357650/e32e168b25ed68a0cf6264c220c07e96c2abfb56/header.jpg?t=1776398844",
         "breakdown": {
           "socialBuzz": 100,
           "newsCoverage": 100,
-          "updateSignal": 100,
+          "updateSignal": 40,
           "steamPresence": 15,
-          "twitchOpportunity": 0,
-          "freshness": 75
+          "twitchOpportunity": 100,
+          "freshness": 100
         },
-        "twitch": {}
+        "twitch": {
+          "viewers": 21881,
+          "streamers": "99+",
+          "streamerCount": 99,
+          "avgViewers": 221,
+          "ratio": 221,
+          "rank": 20
+        }
       }
     },
     "content_pipeline": {
       "state": "amber",
-      "message": "Paused · 1 ideas · 31 scheduled · 0 live",
+      "message": "Paused · 1 ideas · 1 scheduled · 0 live",
       "counts": {
         "ideas": 1,
-        "scheduled": 31,
+        "scheduled": 1,
         "live": 0
       },
-      "last_run_at": "2026-04-07T18:46:34Z"
+      "last_run_at": "2026-04-19T23:57:08.702308Z"
     }
   },
   "next_stream": {
-    "starts_at": "2026-04-21T17:30:00Z",
-    "summary": "🔴 KrispyPidgeon LIVE — Marathon"
+    "starts_at": "2026-04-22T18:30:00Z",
+    "summary": "🔴 KrispyPidgeon LIVE — Enshrouded (Casual One-Off)"
   },
-  "watchlist_top3": [
-    {
-      "game": "Slay the Spire 2",
-      "score": 84,
-      "image": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2868840/b0958d387dc366211e0f353443710cfcf9fdb020/header.jpg?t=1773851542",
-      "tracked": true,
-      "twitch_viewers": null,
-      "twitch_ratio": null
-    },
-    {
-      "game": "Schedule 1",
-      "score": null,
-      "image": null,
-      "tracked": false
-    }
-  ]
+  "watchlist_top3": []
 }
