@@ -1,19 +1,19 @@
 {
-  "updated_at": "2026-04-24T09:42:54Z",
+  "updated_at": "2026-04-28T09:48:57Z",
   "supervisor_reachable": true,
   "apps": {
     "streamclipper": {
       "state": "green",
       "last_run_at": "2026-04-12T02:47:47Z",
-      "message": "Running · :8420 · last run 12d ago · 0 clips/7d",
+      "message": "Running · :8420 · last run 16d ago · 0 clips/7d",
       "metric": {
         "label": "clips last 7d",
         "value": 0
       }
     },
     "thumbnail_generator": {
-      "state": "grey",
-      "message": "Idle · ready to launch · last: God Of War Ragnarok thumb 19d ago",
+      "state": "green",
+      "message": "Running · :8421 · last: God Of War Ragnarok thumb 23d ago",
       "last_run_at": "2026-04-05T02:43:50Z",
       "metric": {
         "label": "last thumbnail",
@@ -23,7 +23,7 @@
     "hivemind": {
       "state": "amber",
       "last_run_at": "2026-04-22T14:31:55.081Z",
-      "message": "Stale · cache 1d old · 30 picks ≥30",
+      "message": "Stale · cache 5d old · 30 picks ≥30",
       "metric": {
         "label": "hot picks (≥30)",
         "value": 30
@@ -63,49 +63,47 @@
     }
   },
   "next_stream": {
-    "starts_at": "2026-04-24T18:00:00Z",
-    "summary": "🔴 KrispyPidgeon LIVE — Marathon / Wildcard"
+    "starts_at": "2026-04-28T17:30:00Z",
+    "summary": "🔴 KrispyPidgeon LIVE — Marathon"
   },
   "week_schedule": [
     {
       "weekday": "Mon",
-      "date": "2026-04-20",
+      "date": "2026-04-27",
       "is_today": false,
       "has_stream": false
     },
     {
       "weekday": "Tue",
-      "date": "2026-04-21",
-      "is_today": false,
+      "date": "2026-04-28",
+      "is_today": true,
       "has_stream": true,
       "time": "18:30",
       "summary": "🔴 KrispyPidgeon LIVE — Marathon"
     },
     {
       "weekday": "Wed",
-      "date": "2026-04-22",
+      "date": "2026-04-29",
       "is_today": false,
-      "has_stream": true,
-      "time": "19:30",
-      "summary": "🔴 KrispyPidgeon LIVE — Enshrouded (Casual One-Off)"
+      "has_stream": false
     },
     {
       "weekday": "Thu",
-      "date": "2026-04-23",
+      "date": "2026-04-30",
       "is_today": false,
       "has_stream": false
     },
     {
       "weekday": "Fri",
-      "date": "2026-04-24",
-      "is_today": true,
+      "date": "2026-05-01",
+      "is_today": false,
       "has_stream": true,
       "time": "19:00",
       "summary": "🔴 KrispyPidgeon LIVE — Marathon / Wildcard"
     },
     {
       "weekday": "Sat",
-      "date": "2026-04-25",
+      "date": "2026-05-02",
       "is_today": false,
       "has_stream": true,
       "time": "10:00",
@@ -113,7 +111,7 @@
     },
     {
       "weekday": "Sun",
-      "date": "2026-04-26",
+      "date": "2026-05-03",
       "is_today": false,
       "has_stream": false
     }
