@@ -1,19 +1,19 @@
 {
-  "updated_at": "2026-04-28T09:48:57Z",
-  "supervisor_reachable": true,
+  "updated_at": "2026-10-27T02:21:16Z",
+  "supervisor_reachable": false,
   "apps": {
     "streamclipper": {
-      "state": "green",
+      "state": "amber",
       "last_run_at": "2026-04-12T02:47:47Z",
-      "message": "Running · :8420 · last run 16d ago · 0 clips/7d",
+      "message": "Idle · last run 197d ago · 0 clips/7d",
       "metric": {
         "label": "clips last 7d",
         "value": 0
       }
     },
     "thumbnail_generator": {
-      "state": "green",
-      "message": "Running · :8421 · last: God Of War Ragnarok thumb 23d ago",
+      "state": "grey",
+      "message": "Idle · ready to launch · last: God Of War Ragnarok thumb 204d ago",
       "last_run_at": "2026-04-05T02:43:50Z",
       "metric": {
         "label": "last thumbnail",
@@ -23,7 +23,7 @@
     "hivemind": {
       "state": "amber",
       "last_run_at": "2026-04-22T14:31:55.081Z",
-      "message": "Stale · cache 5d old · 30 picks ≥30",
+      "message": "Stale · cache 187d old · 30 picks ≥30",
       "metric": {
         "label": "hot picks (≥30)",
         "value": 30
@@ -63,55 +63,57 @@
     }
   },
   "next_stream": {
-    "starts_at": "2026-04-28T17:30:00Z",
-    "summary": "🔴 KrispyPidgeon LIVE — Marathon"
+    "starts_at": "2026-10-28T19:30:00Z",
+    "summary": "🔴 KrispyPidgeon LIVE: Outlast #1"
   },
   "week_schedule": [
     {
       "weekday": "Mon",
-      "date": "2026-04-27",
+      "date": "2026-10-26",
       "is_today": false,
-      "has_stream": false
+      "has_stream": true,
+      "time": "19:30",
+      "summary": "🔴 KrispyPidgeon LIVE: Metro Last Light Redux #6 on next-gen"
     },
     {
       "weekday": "Tue",
-      "date": "2026-04-28",
+      "date": "2026-10-27",
       "is_today": true,
-      "has_stream": true,
-      "time": "18:30",
-      "summary": "🔴 KrispyPidgeon LIVE — Marathon"
-    },
-    {
-      "weekday": "Wed",
-      "date": "2026-04-29",
-      "is_today": false,
       "has_stream": false
     },
     {
+      "weekday": "Wed",
+      "date": "2026-10-28",
+      "is_today": false,
+      "has_stream": true,
+      "time": "19:30",
+      "summary": "🔴 KrispyPidgeon LIVE: Outlast #1"
+    },
+    {
       "weekday": "Thu",
-      "date": "2026-04-30",
+      "date": "2026-10-29",
       "is_today": false,
       "has_stream": false
     },
     {
       "weekday": "Fri",
-      "date": "2026-05-01",
+      "date": "2026-10-30",
       "is_today": false,
       "has_stream": true,
-      "time": "19:00",
-      "summary": "🔴 KrispyPidgeon LIVE — Marathon / Wildcard"
+      "time": "19:30",
+      "summary": "🔴 KrispyPidgeon LIVE: Outlast #2 (finale, Halloween eve)"
     },
     {
       "weekday": "Sat",
-      "date": "2026-05-02",
+      "date": "2026-10-31",
       "is_today": false,
       "has_stream": true,
       "time": "10:00",
-      "summary": "🔴 Saturday Sessions — KrispyPidgeon LIVE"
+      "summary": "🎃 Saturday Sessions HALLOWEEN: Outlast 2 #1"
     },
     {
       "weekday": "Sun",
-      "date": "2026-05-03",
+      "date": "2026-11-01",
       "is_today": false,
       "has_stream": false
     }
