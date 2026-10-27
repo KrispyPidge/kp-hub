@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-10-27T02:21:16Z",
-  "supervisor_reachable": false,
+  "updated_at": "2026-10-27T02:23:31Z",
+  "supervisor_reachable": true,
   "apps": {
     "streamclipper": {
       "state": "amber",
